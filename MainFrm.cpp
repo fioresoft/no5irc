@@ -733,7 +733,7 @@ BOOL CMainFrame::LoadUserSettings()
 		m_name = ini.GetString(_T("settings"), _T("real"), NULL, MAX_PATH);
 		m_pass = ini.GetString(_T("settings"), _T("pass"), NULL, MAX_PATH);
 		m_server = ini.GetString(_T("settings"), _T("server"), _T("irc.freenode.net"), MAX_PATH);
-		ini.GetStringList(_T("settings"), _T("servers"), m_servers);
+		//ini.GetStringList(_T("settings"), _T("servers"), m_servers);
 		res = TRUE;
 	}
 	return res;
@@ -755,7 +755,8 @@ BOOL CMainFrame::SaveUserSettings()
 				if (ini.WriteString(_T("settings"), _T("real"), m_name)) {
 					if (ini.WriteString(_T("settings"), _T("pass"), m_pass)) {
 						if (ini.WriteString(_T("settings"), _T("server"), m_server)) {
-							res = ini.WriteStringList(_T("settings"), _T("servers"), m_servers);
+							//res = ini.WriteStringList(_T("settings"), _T("servers"), m_servers);
+							res = TRUE;
 						}
 					}
 				}
