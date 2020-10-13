@@ -107,11 +107,7 @@ public:
 		// resets
 		m_start = m_end = 0;
 	}
-	void SetDelimiters(LPCSTR dels)
-	{
-		m_dels = dels;
-	}
-
+	
 	CString GetNext(void)
 	{
 		CString res;
@@ -524,6 +520,29 @@ void EnumTags3(LPCTSTR text,LPCTSTR pszBegin,LPCTSTR pszEnd,
 	}
 }
 
+class CStringBuffer
+{
+	LPTSTR m_p;
+	CString& m_s;
+public:
+	CStringBuffer(CString& s) :m_s(s)
+	{
+		m_p = s.GetBuffer(0);
+	}
+	CStringBuffer(CString& s, int len) :m_s(s)
+	{
+		m_p = s.GetBuffer(len);
+	}
+	~CStringBuffer()
+	{
+		m_s.ReleaseBuffer();
+	}
+	operator LPTSTR ()
+	{
+		return m_p;
+	}
+};
+
 // if s is not involved in delimiters, a copy of it is returned
 inline CString RemoveDelimiters(LPCTSTR s, TCHAR chStart = _T('\"'),TCHAR chEnd = _T('\"'))
 {
@@ -548,6 +567,30 @@ inline CString RemoveDelimiters(LPCTSTR s, TCHAR chStart = _T('\"'),TCHAR chEnd 
 	}
 	return res;
 }
+
+// if s is not involved in delimiters, a copy of it is returned - safe version
+inline CString RemoveDelimiters2(LPCTSTR p, TCHAR chStart = '\x01', TCHAR chEnd = '\x01')
+{
+	CString tag = p;
+
+	while (*p) {
+		if (*p == chStart) {
+			LPCTSTR q = (++p);
+			while (*q && *q != chEnd)
+				q++;
+			if (*q == chEnd) {
+				CStringBuffer buf(tag, (q - p) + 1);
+				HRESULT hr = StringCchCopyN(buf, (q - p) + 1, p, (q - p));
+				ATLASSERT(hr == S_OK);
+				break;
+			}
+		}
+		else
+			p++;
+	}
+	return tag;
+}
+
 
 // // if s is not involved in quotes, a copy of it is returned
 inline CString RemoveQuotes(LPCTSTR s)
@@ -838,29 +881,6 @@ inline CString & PathAddBackSlash(CString &s)
 	}
 	return s;
 }
-
-class CStringBuffer
-{
-	LPTSTR m_p;
-	CString &m_s;
-public:
-	CStringBuffer(CString &s):m_s(s)
-	{
-		m_p = s.GetBuffer(0);
-	}
-	CStringBuffer(CString &s,int len):m_s(s)
-	{
-		m_p = s.GetBuffer(len);
-	}
-	~CStringBuffer()
-	{
-		m_s.ReleaseBuffer();
-	}
-	operator LPTSTR () 
-	{
-		return m_p;
-	}
-};
 
 // this doesn't set window text
 class  CWindowTextString : public CString
