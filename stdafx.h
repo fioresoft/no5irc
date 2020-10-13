@@ -12,6 +12,14 @@
 #define _WIN32_IE		0x0700
 #define _RICHEDIT_VER	0x0500
 
+#ifdef _DEBUG
+#define PRODUCT_NAME	_T("irc11.exe")
+#else
+#define PRODUCT_NAME	_T("no5irc.exe")
+#endif
+
+#include <strsafe.h>
+#include <ctime>
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlwin.h>
@@ -42,7 +50,7 @@ extern CAppModule _Module;
 #include "../NO5TL/No5Controls.h"
 #include "..\NO5TL\WinSocketWithHandler.h"
 #include "..\NO5TL\DataBuffer.h"
-#include "..\NO5TL\MyString.h"
+#include "..\NO5TL\mystring.h"
 #include "..\NO5TL\WinFile.h"
 #include "..\NO5TL\No5RichEdit.h"
 #include "..\NO5TL\IniFile.h"

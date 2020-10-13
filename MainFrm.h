@@ -41,7 +41,7 @@ public:
 	{
 		//
 	}
-	DECLARE_FRAME_WND_CLASS(_T("MyTabbedChildWindow"), 0, COLOR_APPWORKSPACE)
+	DECLARE_FRAME_WND_CLASS(_T("MyTabbedChildWindow"), COLOR_APPWORKSPACE)
 	BEGIN_MSG_MAP(CMyTabbedChildWindow)
 		NOTIFY_CODE_HANDLER(CTCN_SELCHANGE, OnSelChange)
 		NOTIFY_CODE_HANDLER(CTCN_CLOSE, OnTabClose)
@@ -156,6 +156,8 @@ private:
 	CStringArray m_servers;
 	CString m_NameOrChannel;
 	bool m_bInChannel;
+	CString m_JoinChannel; // channel to join on connection
+	bool m_bNoColors; // channel supports colors or no
 	//
 	void CreateTreeView();
 	void CreateListView();
@@ -189,6 +191,7 @@ public:
 		//
 		m_server = _T("irc.freenode.net");
 		m_NameOrChannel = m_server;
+		m_bNoColors = false;
 		//
 		//m_CmdBar.m_hIconChildMaximized = LoadIcon(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
 	}
