@@ -78,60 +78,120 @@ BOOL CView::PreTranslateMessage(MSG* pMsg)
 int CView::AppendTextIrc(LPCTSTR lpstrText)
 {
 	const TCHAR* p = lpstrText;
-	const TCHAR* pBeginColor = lpstrText, *pBeginBack;
-	const TCHAR* pEnd;
-	int fore,back;
+	const TCHAR* pEnd = p;
+	int fore, back;
 	bool setfore = false, setback = false;
 
-	while(*p){
+	while (*p) {
 		if (*p == 0x3) {
-			pBeginColor = p++;
+			if (p > pEnd) {
+				CString s(pEnd, p - pEnd);
+				AppendText(s);
+			}
+			p++;
 			if (*p >= '0' && *p <= '9') {
 				fore = (*p - '0') * 10;
 				setfore = true;
 				p++;
 				if (*p >= '0' && *p <= '9') {
 					fore += (*p - '0');
+					pEnd = ++p;
 				}
 				else {
-					pEnd = --p;
+					pEnd = p;
+					fore /= 10;
 				}
 				if (*p == ',') {
-					pBeginBack = ++p;
+					++p;
 					if (*p >= '0' && *p <= '9') {
 						back = (*p - '0') * 10;
 						setback = true;
 						p++;
 						if (*p >= '0' && *p <= '9') {
 							back += (*p - '0');
+							pEnd = ++p;
 						}
 						else {
-							pEnd = --p;
+							pEnd = p;
+							back /= 10;
 						}
 					}
 				}
+				else
+					pEnd = p;
+			}
+			else {
+				ResetFormat();
+				pEnd = p;
+				continue;
 			}
 			if (setfore) {
 				SetTextColor(ColorFromCode(fore));
+				setfore = false;
 			}
 			if (setback) {
 				SetTextBkColor(ColorFromCode(back));
+				setback = false;
 			}
-			CString s(pBeginColor, p - pBeginColor);
+		}
+		else if (*p == 0x0f) { // reset
+			ResetFormat();
+			pEnd = p;
+		}
+		else if (*p == 0x11) { // monospaced
+			SetTextFontName(_T("Courier"));
+			pEnd = p;
+		}
+		else if (*p == 0x1E) {
+			SwitchStrike();
+			pEnd = p;
+		}
+		else if (*p == 0x1F) {
+			SwitchUnderline();
+			pEnd = p;
+		}
+		else if (*p == 0x1D) {
+			SwitchItalic();
+			pEnd = p;
+		}
+		else if (*p == 0x2) {
+			SwitchBold();
+			pEnd = p;
+		}
+		if (*(p + 1) == 0 && (p > pEnd))
+		{
+			CString s(pEnd, p - pEnd + 1);
 			AppendText(s);
+			ResetFormat();
 		}
-		else {
-			if (p != pBeginColor) {
-				CString s(pBeginColor, p - pBeginColor);
-				AppendText(s);
-			}
-			p++;
-		}
-		
+		p++;
 	}
 	return 0;
 }
 
+
+void CView::ResetFormat()
+{
+	SetTextColor(0);
+	SetTextBkColor(0xffffff);
+	SetUnderline(FALSE, SCF_SELECTION);
+	SetBold(FALSE, SCF_SELECTION);
+	SetItalic(FALSE, SCF_SELECTION);
+	SetTextFontName(_T("Arial"));
+}
+
+LRESULT CView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	SetTextColor(0, SCF_ALL);
+	SetTextBkColor(0xffffff, SCF_ALL);
+	SetUnderline(FALSE, SCF_ALL);
+	SetBold(FALSE, SCF_ALL);
+	SetItalic(FALSE, SCF_ALL);
+	SetTextFontName(_T("Arial"), SCF_ALL);
+	SetTextHeight(12, SCF_ALL);
+	bHandled = FALSE;
+	return 0;
+}
 
 LRESULT CBottom::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
 {

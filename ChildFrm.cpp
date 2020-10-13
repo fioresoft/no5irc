@@ -18,7 +18,7 @@ LRESULT CChildFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	m_hWndClient = m_view.Create(m_hWnd, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VSCROLL  |\
 		ES_AUTOVSCROLL | ES_MULTILINE | ES_NOHIDESEL | ES_SAVESEL | ES_READONLY | ES_WANTRETURN, WS_EX_CLIENTEDGE);
 	m_font = AtlCreateControlFont();
-	m_view.SetFont(m_font);
+	//m_view.SetFont(m_font);
 	m_data.pView = &m_view;
 
 	bHandled = FALSE;

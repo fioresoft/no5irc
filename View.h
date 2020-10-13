@@ -11,8 +11,10 @@ public:
 
 	BOOL PreTranslateMessage(MSG* pMsg);
 	int AppendTextIrc(LPCTSTR lpstrText);
+	void ResetFormat();
 
 	BEGIN_MSG_MAP(CView)
+		MESSAGE_HANDLER(WM_CREATE,OnCreate)
 		CHAIN_MSG_MAP_ALT(CRichEditCommands<CView>,1)
 	END_MSG_MAP()
 
@@ -20,6 +22,8 @@ public:
 //	LRESULT MessageHandler(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 //	LRESULT CommandHandler(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 //	LRESULT NotifyHandler(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/)
+
+	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 };
 
 class CBottom : public CWindowImpl<CBottom, CEdit>, public CEditCommands<CBottom>, public CMessageFilter

@@ -40,6 +40,7 @@ public:
 	CString m_server;
 	CString m_user;
 	CString m_pass;
+	CString m_JoinChannel;
 	CStringArray m_servers;
 
 	BEGIN_MSG_MAP(CAboutDlg)
@@ -69,6 +70,8 @@ public:
 		edit.AppendText(m_user);
 		edit = GetDlgItem(IDC_EDIT4);
 		edit.AppendText(m_pass);
+		edit = GetDlgItem(IDC_EDIT5);
+		edit.AppendText(m_JoinChannel);
 
 		return TRUE;
 	}
@@ -85,6 +88,8 @@ public:
 			edit.GetWindowText(m_user);
 			edit = GetDlgItem(IDC_EDIT4);
 			edit.GetWindowText(m_pass);
+			edit = GetDlgItem(IDC_EDIT5);
+			edit.GetWindowText(m_JoinChannel);
 			int nSel = m_combo.GetCurSel();
 			m_combo.GetLBText(nSel, m_server);
 		}
