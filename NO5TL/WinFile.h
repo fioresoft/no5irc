@@ -125,8 +125,7 @@ public:
 		return res;
 	}
 
-
-	BOOL Write(CDataBufferT<TCHAR> &db)
+	BOOL Write(CDataBuffer<TCHAR> &db)
 	{
 		BOOL res = FALSE;
 		DWORD written = 0;
@@ -147,7 +146,7 @@ public:
 		DWORD dummy = 0;
 		BOOL res;
 
-		res = Write((LPVOID)(const_cast<LPTSTR>(p)),lstrlen(p),&dummy);
+		res = Write((LPVOID)(const_cast<LPTSTR>(p)),lstrlen(p) * sizeof(TCHAR),&dummy);
 
 		if(res && pdwWritten){
 			*pdwWritten = dummy;
@@ -155,27 +154,29 @@ public:
 		return res;
 	}
 
-	template <typename CH = char>
-	BOOL ReadAll(CDataBufferT<TCHAR> &db,int ChunkSize = 512)
+	template <typename ch = TCHAR>
+	BOOL ReadAll(CDataBuffer<ch> &db,int ChunkSize = 2048)
 	{
 		BOOL res = FALSE;
 
 		ATLASSERT(IsHandleValid());
 		if(IsHandleValid()){
-			CH *buf = new CH[ChunkSize];
+			const DWORD dwSize = GetSize();
+			if (ChunkSize == 0)						// TODO just a hack because getting in chuncks were not working with CStringToken right below
+				ChunkSize = dwSize;
+			BYTE *buf = new BYTE[ChunkSize];
 			ATLASSERT(buf);
 			if(buf){
 				DWORD dwRead = 0;
 				DWORD dwTotal = 0;
-				DWORD dwSize = GetSize();
-				
+								
 				do{
 					::ZeroMemory(buf,ChunkSize);
-					res = Read(buf,sizeof(buf),&dwRead);
+					res = Read(buf, ChunkSize,&dwRead);
 					ATLASSERT(res);
 					dwTotal += dwRead;
-					db.Add((LPBYTE)buf,dwRead);
-				}while(dwRead == sizeof(buf) && res);
+					db.Add(buf,dwRead);
+				}while(dwRead == ChunkSize && res);
 
 				if(res){
 					ATLASSERT(dwTotal == dwSize);
@@ -186,16 +187,21 @@ public:
 		}
 		return res;
 	}
+
 	BOOL ReadLines(CSimpleArray<CString> &lines)
 	{
-		CDataBuffer db;
-		BOOL res = ReadAll(db);
+		CDataBuffer<TCHAR> db;
+		BOOL res = ReadAll<TCHAR>(db,0);
 
 		if(res){
 			NO5TL::CStringToken st;
-			db.AddNull();
-			st.Init(db.GetData(),"\r\n");
-			st.GetAll(lines);
+			//db.AddNull();
+			//db.ReplaceChars(0,'.');
+			st.Init((db.GetData()),_T("\r\n"));
+			int debug = db.GetDataLen();
+			int debugs = st.GetStringLength() * sizeof(TCHAR);
+			ATLASSERT(debug == debugs);
+			st.GetAll3(lines);
 		}
 		return res;
 	}

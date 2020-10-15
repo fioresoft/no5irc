@@ -78,7 +78,7 @@ public:
 	template <>
 	void Add(LPCSTR p)
 	{
-		TCHAR *pos;
+		char *pos;
 		int len = strlen(p) * sizeof(char);
 
 		EnsureBuffer(len);
@@ -90,7 +90,7 @@ public:
 	void Add(LPCWSTR p)
 	{
 		CStringW s(p);
-		ch* pos;
+		wchar_t* pos;
 		int len = s.GetLength() * sizeof(wchar_t);
 
 		EnsureBuffer(len);

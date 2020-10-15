@@ -96,7 +96,10 @@ public:
 	{
 		m_dels = dels;
 	}
-
+	int GetStringLength() const
+	{
+		return m_str.GetLength();
+	}
 	void Init(LPCSTR str, LPCSTR dels, bool IncludeLast = true)
 	{
 		// BEGIN_CHANGE
