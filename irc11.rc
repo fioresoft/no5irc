@@ -63,6 +63,13 @@ BEGIN
     BUTTON      ID_APP_ABOUT
 END
 
+IDR_CHANNELSVIEW TOOLBAR 16, 15
+BEGIN
+    BUTTON      ID_FILE_SAVE
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_FILE_UPDATE
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -70,6 +77,8 @@ END
 //
 
 IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
+
+IDR_CHANNELSVIEW        BITMAP                  "res\\channels.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -130,7 +139,7 @@ END
 // remains consistent on all systems.
 IDR_MAINFRAME           ICON                    "res\\irc11.ico"
 
-IDR_MDICHILD            ICON                    "res\\icon1.ico"
+IDR_MDICHILD            ICON                    "res\\logo4.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -223,7 +232,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright 2020"
             VALUE "OriginalFilename", "irc09.exe"
             VALUE "ProductName", "NO5 IRC"
-            VALUE "ProductVersion", "0.6.1.0"
+            VALUE "ProductVersion", "0.6.2.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -266,6 +275,7 @@ BEGIN
     ID_FILE_PRINT_SETUP     "Change the printer and printing options\nPrint Setup"
     ID_FILE_PRINT           "Print the active document\nPrint"
     ID_FILE_PRINT_PREVIEW   "Display full pages\nPrint Preview"
+    ID_FILE_UPDATE          "Update Channels\nUpdate"
 END
 
 STRINGTABLE
@@ -302,7 +312,7 @@ BEGIN
     ID_EDIT_REPLACE         "Replace specific text with different text\nReplace"
     ID_EDIT_SELECT_ALL      "Select the entire document\nSelect All"
     ID_EDIT_UNDO            "Undo the last action\nUndo"
-    ID_EDIT_REDO            "Redo the previously undone action\nRedo"
+    ID_EDIT_REDO            "Reload"
 END
 
 STRINGTABLE
@@ -349,6 +359,57 @@ END
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_PTB)
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 #pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDR_TOOLBAR1            BITMAP                  "res\\toolbar1.bmp"
+
+IDR_TOOLBAR2            BITMAP                  "res\\toolbar2.bmp"
+
+IDR_TOOLBAR3            BITMAP                  "res\\toolbar3.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU1 MENU
+BEGIN
+    POPUP "User"
+    BEGIN
+        MENUITEM "Send Version Request",        ID_USER_SENDVERSIONREQUEST
+        MENUITEM "Send USERINFO Request",       ID_USER_SENDUSERINFOREQUEST
+        MENUITEM "Send PING request",           ID_USER_SENDPINGREQUEST
+        MENUITEM "Send TIME request",           ID_USER_SENDTIMEREQUEST
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON2               ICON                    "res\\19.ico"
+
+IDI_ICON3               ICON                    "res\\4.ico"
+
+IDI_ICON4               ICON                    "res\\16.ico"
+
+IDI_ICON5               ICON                    "res\\17.ico"
+
+IDI_ICON6               ICON                    "res\\21.ico"
+
+IDI_ICON7               ICON                    "res\\23.ico"
+
+IDI_ICON8               ICON                    "res\\10.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //

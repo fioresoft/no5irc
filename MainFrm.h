@@ -4,10 +4,51 @@
 
 #pragma once
 #include "Path.h"
+#include "IIRCEvents.h"
+#include "IIrc.h"
 
 #define CHAIN_COMMANDS_MEMBER_ID_RANGE(theChainMember, idFirst, idLast) \
     if(uMsg == WM_COMMAND && (LOWORD(wParam) >= idFirst && LOWORD(wParam) <=idLast) && (theChainMember.m_hWnd == GetFocus())) \
         CHAIN_MSG_MAP_MEMBER(theChainMember)
+
+class CMainFrame;
+
+class CChannelsViewFrame :
+	public CFrameWindowImpl<CChannelsViewFrame>,
+	public CUpdateUI<CChannelsViewFrame>,
+	public CMessageFilter, public CIdleHandler
+{
+public:
+	DECLARE_FRAME_WND_CLASS(_T("ChannelsViewFrame"), IDR_CHANNELSVIEW)
+	CListViewCtrl &m_lv;
+	CMainFrame* m_pf;
+	CChannelsViewFrame(CListViewCtrl& lv, CMainFrame *pFrame) :m_lv(lv),m_pf(pFrame)
+	{
+		//
+	}
+	typedef  CFrameWindowImpl<CChannelsViewFrame> _baseClass;
+public:
+	BEGIN_MSG_MAP(CChannelsViewFrame)
+		MESSAGE_HANDLER(WM_CREATE,OnCreate)
+		COMMAND_ID_HANDLER(ID_FILE_SAVE, OnFileSave)
+		COMMAND_ID_HANDLER(ID_FILE_OPEN, OnFileOpen)
+		COMMAND_ID_HANDLER(ID_FILE_UPDATE, OnFileUpdate)
+		FORWARD_NOTIFICATIONS()
+		CHAIN_MSG_MAP(CUpdateUI<CChannelsViewFrame>)
+		CHAIN_MSG_MAP(CFrameWindowImpl< CChannelsViewFrame>)
+	END_MSG_MAP()
+
+	BEGIN_UPDATE_UI_MAP(CChannelsViewFrame)
+	END_UPDATE_UI_MAP()
+
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	virtual BOOL OnIdle();
+
+	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnFileSave(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnFileOpen(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnFileUpdate(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+};
 
 class CMySocket : public CSimpleSocket
 {
@@ -48,6 +89,7 @@ public:
 		NOTIFY_HANDLER(IDC_LISTVIEW, NM_DBLCLK, OnLVDoubleClick)
 		NOTIFY_HANDLER(IDC_TREEVIEW, NM_DBLCLK, OnTVDoubleClick)
 		NOTIFY_HANDLER(IDC_LISTVIEW, LVN_COLUMNCLICK, OnColumnClick)
+		NOTIFY_HANDLER(IDC_TREEVIEW, NM_RCLICK, OnTVRightClick)
 		//FORWARD_NOTIFICATIONS()
 		CHAIN_MSG_MAP(_baseClass)
 	END_MSG_MAP()
@@ -67,6 +109,7 @@ public:
 	LRESULT OnLVDoubleClick(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
 	LRESULT OnTVDoubleClick(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
 	LRESULT OnColumnClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled);
+	LRESULT OnTVRightClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled);
 };
 
 template< class T, class TTabCtrl >
@@ -127,7 +170,9 @@ class CMainFrame :
 	public CTabbedMDIFrameWindowImpl<CMainFrame, CMyTabbedMDIClient>, 
 	public CUpdateUI<CMainFrame>,
 	public CMessageFilter, public CIdleHandler,
-	public ISocketEvents
+	public ISocketEvents,
+	public IIRCEvents,
+	public IIrc
 {
 	typedef CTabbedMDIFrameWindowImpl<CMainFrame, CMyTabbedMDIClient> _baseClass;
 	typedef CDotNetTabCtrl<CTabViewTabItem> _tabControl;
@@ -146,6 +191,7 @@ private:
 	CNo5TreeCtrl m_tv;
 	CListViewCtrl m_lv;
 	CMarqueeWnd m_marquee;
+	CChannelsViewFrame m_ChannelsView;
 	CMySocket m_sock;
 	CString m_server;
 	CString m_nick;
@@ -158,10 +204,13 @@ private:
 	bool m_bInChannel;
 	CString m_JoinChannel; // channel to join on connection
 	bool m_bNoColors; // channel supports colors or no
+	CImageListManaged m_il;
+	time_t m_t;	// PING request time
 	//
 	void CreateTreeView();
 	void CreateListView();
 	void CreateMarquee();
+	void CreateImageList();
 	BOOL PrintRTF(HWND hwnd, HDC hdc);
 	BOOL LoadUserSettings();
 	BOOL SaveUserSettings();
@@ -171,15 +220,15 @@ private:
 public:
 	ViewData* GetViewData();
 	CView* GetActiveView();
-	ViewData* GetViewDataByName(const CString& name);
-	CView* GetViewByName(const CString& name);
+	ViewData* GetViewDataByName(LPCTSTR name);
+	CView* GetViewByName(LPCTSTR name);
 	CView* CreateViewIfNoExist(LPCTSTR name, ViewType type);
-	CView* CreatePrivateChannel(const CString& name);
-	CView* CreateChannel(const CString& channel);
-	bool ActivateViewByName(const CString& name);
+	CView* CreatePrivateChannel(LPCTSTR name);
+	CView* CreateChannel(LPCTSTR name);
+	bool ActivateViewByName(LPCTSTR name);
 public:
 	DECLARE_FRAME_WND_CLASS(NULL, IDR_MAINFRAME)
-	CMainFrame() :m_sock((ISocketEvents*)this),m_tab(*this)
+	CMainFrame() :m_sock((ISocketEvents*)this),m_tab(*this),m_ChannelsView(m_lv,this)
 	{
 		m_bInChannel = false;
 		m_servers.Add(_T("irc.freenode.net"));
@@ -191,7 +240,7 @@ public:
 		//
 		m_server = _T("irc.freenode.net");
 		m_NameOrChannel = m_server;
-		m_bNoColors = false;
+		m_bNoColors = true;
 		//
 		//m_CmdBar.m_hIconChildMaximized = LoadIcon(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
 	}
@@ -211,6 +260,9 @@ public:
 		MESSAGE_HANDLER(WM_MSGFROMBOTTOM, OnMsgFromBottom)
 		MESSAGE_HANDLER(WM_CHILDDESTROY, OnChildDestroy)
 		MESSAGE_HANDLER(WM_MDIACTIVATE, OnMDIActivate)
+		MESSAGE_HANDLER(WM_CHANNELSFILEOPEN,OnChannelsFileOpen)
+		MESSAGE_HANDLER(WM_CHANNELSFILESAVE, OnChannelsFileSave)
+		MESSAGE_HANDLER(WM_CHANNELSFILEUPDATE, OnChannelsFileUpdate)
 		COMMAND_ID_HANDLER(ID_APP_EXIT, OnFileExit)
 		COMMAND_ID_HANDLER(ID_FILE_NEW, OnFileNew)
 		COMMAND_ID_HANDLER(ID_FILE_SAVE,OnFileSave)
@@ -227,6 +279,7 @@ public:
 		NOTIFY_HANDLER(IDC_LISTVIEW, NM_DBLCLK, OnLVDoubleClick)
 		NOTIFY_HANDLER(IDC_TREEVIEW, NM_DBLCLK, OnTVDoubleClick)
 		NOTIFY_HANDLER(IDC_LISTVIEW,LVN_COLUMNCLICK, OnColumnClick)
+		NOTIFY_HANDLER(IDC_TREEVIEW,NM_RCLICK,OnTVRightClick)
 		CHAIN_MDI_CHILD_COMMANDS()
 		CHAIN_MSG_MAP(CUpdateUI<CMainFrame>)
 		CHAIN_MSG_MAP(_baseClass)
@@ -240,6 +293,9 @@ public:
 	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled);
 	LRESULT OnMsgFromBottom(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnChannelsFileOpen(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnChannelsFileSave(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnChannelsFileUpdate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFilePrint(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
@@ -260,6 +316,7 @@ public:
 	LRESULT OnLVDoubleClick(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
 	LRESULT OnTVDoubleClick(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
 	LRESULT OnColumnClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled);
+	LRESULT OnTVRightClick(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
 
 	//
 	virtual void OnSockError(int error);
@@ -273,4 +330,46 @@ public:
 	virtual void OnSockConnectTimeout(void);
 	virtual void OnSockResolvingAddress(void);
 	virtual void OnSockAddressResolved(int error);
+	//
+	virtual void OnChannelList(LPCTSTR channel, LPCTSTR users, LPCTSTR topic);
+	virtual void OnBeginningOfList();
+	virtual void OnEndOfList();
+	virtual void OnChannelMode(LPCTSTR channel, LPCTSTR modes);
+	virtual void OnUserMode(LPCTSTR user, LPCTSTR modes);
+	virtual void OnChannelCreationTime(LPCTSTR channel, time_t time);
+	virtual void OnBeginMOTD(LPCTSTR channel);
+	virtual void OnMOTD(LPCTSTR channel, LPCTSTR msg);
+	virtual void OnEndMOTD(LPCTSTR channel);
+	virtual void OnNoTopic(LPCTSTR channel);
+	virtual void OnTopic(LPCTSTR channel, LPCTSTR topic);
+	virtual void OnWhoSetTheTopic(LPCTSTR channel, LPCTSTR user, time_t time);
+	virtual void OnNamesInChannel(LPCTSTR channel,const CSimpleArray<CString>& args);
+	virtual void OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg);
+	virtual void OnPrivateMsg(LPCTSTR channel, LPCTSTR from, LPCTSTR msg);
+	virtual void OnUserQuit(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);
+	virtual void OnUserJoin(LPCTSTR channel, LPCTSTR user);
+	virtual void OnUserPart(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);
+	virtual void OnNotice(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);
+	virtual void OnPing();
+	virtual void OnUnknownCmd(LPCTSTR line);
+	//
+	virtual void SendChannelMsg(LPCTSTR channel, LPCTSTR msg);
+	virtual void SendPrivateMsg(LPCTSTR to, LPCTSTR msg);
+	virtual void SendNoticeMsg(LPCTSTR to, LPCTSTR msg);
+	virtual void JoinChannel(LPCTSTR channel);
+	virtual void LeaveChannel(LPCTSTR channel, LPCTSTR msg);
+	virtual void Quit(LPCTSTR msg);
+	virtual void SendPass(LPCTSTR pass);
+	virtual void SendNick(LPCTSTR nick);
+	virtual void SendUser(LPCTSTR user,LPCTSTR realname);
+	virtual void ListChannels();
+	virtual void GetMode(LPCTSTR NameOrChannel);
+	virtual void RequestVersion(LPCTSTR from);
+	virtual void RequestUserinfo(LPCTSTR from);
+	virtual void RequestPing(LPCTSTR from);
+	virtual void RequestTime(LPCTSTR from);
+	virtual void AnswerVersionRequest(LPCTSTR from);
+	virtual void AnswerUserinfoRequest(LPCTSTR from);
+	virtual void AnswerPingRequest(LPCTSTR from);
+	virtual void AnswerTimeRequest(LPCTSTR from);
 };

@@ -210,6 +210,7 @@
   <ItemGroup>
     <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="ChildFrm.cpp" />
+    <ClCompile Include="IIRCEvents.cpp" />
     <ClCompile Include="irc11.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="Path.cpp" />
@@ -224,20 +225,38 @@
   <ItemGroup>
     <ClInclude Include="AboutDlg.h" />
     <ClInclude Include="ChildFrm.h" />
+    <ClInclude Include="IIrc.h" />
+    <ClInclude Include="IIRCEvents.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="usermsgs.h" />
     <ClInclude Include="View.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="irc11.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\..\..\Downloads\NO5-master\NO5-master\res\logo4.ico" />
+    <Image Include="res\10.ico" />
+    <Image Include="res\16.ico" />
+    <Image Include="res\17.ico" />
+    <Image Include="res\19.gif" />
+    <Image Include="res\19.ico" />
+    <Image Include="res\21.ico" />
+    <Image Include="res\23.ico" />
+    <Image Include="res\4.ico" />
+    <Image Include="res\channels.bmp" />
     <Image Include="res\icon1.ico" />
+    <Image Include="res\icon2.ico" />
     <Image Include="res\irc11.ico" />
     <Image Include="res\irc11Doc.ico" />
+    <Image Include="res\logo4.ico" />
     <Image Include="res\toolbar.bmp" />
+    <Image Include="res\toolbar1.bmp" />
+    <Image Include="res\toolbar2.bmp" />
+    <Image Include="res\toolbar3.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

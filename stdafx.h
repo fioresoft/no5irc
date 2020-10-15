@@ -15,7 +15,7 @@
 #ifdef _DEBUG
 #define PRODUCT_NAME	_T("irc11.exe")
 #else
-#define PRODUCT_NAME	_T("no5irc.exe")
+#define PRODUCT_NAME	_T("no5 irc.exe")
 #endif
 
 #include <strsafe.h>
