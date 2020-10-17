@@ -12,6 +12,7 @@ struct IIrc
 	virtual void SendUser(LPCTSTR user,LPCTSTR realname) = 0;
 	virtual void ListChannels() = 0;
 	virtual void GetMode(LPCTSTR NameOrChannel) = 0;
+	virtual void Pong(LPCTSTR code) = 0;
 	virtual void RequestVersion(LPCTSTR from) = 0;
 	virtual void RequestUserinfo(LPCTSTR from) = 0;
 	virtual void RequestPing(LPCTSTR from) = 0;
