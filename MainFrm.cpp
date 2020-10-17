@@ -10,6 +10,7 @@
 #include "ChildFrm.h"
 #include "MainFrm.h"
 #include "usermsgs.h"
+#include "COptionsDlg.h"
 #define IDC_BAND_MARQUEE	100
 
 static BOOL CALLBACK EnumChildGetDataByName(HWND hWnd, LPARAM lParam);
@@ -351,6 +352,25 @@ LRESULT CMainFrame::OnViewStatusBar(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*h
 	::ShowWindow(m_hWndStatusBar, bVisible ? SW_SHOWNOACTIVATE : SW_HIDE);
 	UISetCheck(ID_VIEW_STATUS_BAR, bVisible);
 	UpdateLayout();
+	return 0;
+}
+LRESULT CMainFrame::OnViewOptions(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	CPropertySheet ps(_T("Options"));
+	COptionsDlgPage pp;
+
+	pp.m_bAllowCTCP = m_bAllowCTCP ? true : false;
+	pp.m_userinfo = m_userinfo;
+
+	BOOL res = ps.AddPage(pp);
+	if (res) {
+		int res = ps.DoModal(m_hWnd);
+
+		if (res == IDOK) {
+			m_bAllowCTCP = pp.m_bAllowCTCP ? TRUE : FALSE;
+			m_userinfo = pp.m_userinfo;
+		}
+	}
 	return 0;
 }
 
@@ -702,23 +722,28 @@ LRESULT CMainFrame::OnMsgFromBottom(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lPara
 						CString s;
 						CView* pView = CreatePrivateChannel(arr[1]);
 
-						pView->SetSelEnd();
+						/*pView->SetSelEnd();
 						pView->SetTextColor(0xaa0000);
 						pView->AppendText(m_nick);
 						pView->AppendText(_T(": "));
 						pView->ResetFormat();
 						pView->AppendText(msg);
+						pView->AppendText(_T("\n"));*/
 						//msg = _T("PRIVMSG ");
 						//msg += arr[1];
+						OnPrivateMsg(arr[1], m_nick, msg);
 					}
 					else {
 						CView* pView = CreateChannel(arr[1]);
-						pView->SetSelEnd();
+						/*pView->SetSelEnd();
 						pView->SetTextColor(0xaa0000);
 						pView->AppendText(m_nick);
 						pView->AppendText(_T(": "));
 						pView->ResetFormat();
 						pView->AppendText(msg);
+						pView->AppendText(_T("\n"));*/
+						ATLASSERT(arr[1] == '#');
+						OnChannelMsg(arr[1], m_nick, msg);
 					}
 				}
 			}
@@ -903,6 +928,8 @@ BOOL CMainFrame::LoadUserSettings()
 		m_server = ini.GetString(_T("settings"), _T("server"), _T("irc.freenode.net"), MAX_PATH);
 		m_JoinChannel = ini.GetString(_T("settings"), _T("channel"), NULL, MAX_PATH);
 		res = ini.GetStringList(_T("settings"), _T("servers"), m_servers);
+		m_bAllowCTCP = ini.GetInt(_T("CTCP"), _T("AnswerCTCPQueries"),m_bAllowCTCP ? 1  : 0);
+		m_userinfo = ini.GetString(_T("CTCP"), _T("USERINFO"), m_userinfo, MAX_PATH);
 	}
 	return res;
 
@@ -929,6 +956,11 @@ BOOL CMainFrame::SaveUserSettings()
 						}
 					}
 				}
+			}
+		}
+		if (res) {
+			if (ini.WriteInt(_T("CTCP"), _T("AnswerCTCPQueries"), m_bAllowCTCP ? 1 : 0)) {
+				res = ini.WriteString(_T("CTCP"), _T("USERINFO"), m_userinfo);
 			}
 		}
 	}
@@ -1222,6 +1254,9 @@ void CMainFrame::OnSockRead(int error)
 					m_NameOrChannel = params[4];
 				OnNamesInChannel(params[4], params);
 			}
+			else if (!code.Compare(_T("366"))) {
+				OnNamesEnd(params[3]);
+			}
 			else if (!code.Compare(_T("331"))) { // no topic
 				if (count2 >= 4) {
 					if (m_NameOrChannel.IsEmpty() || params[3].GetAt(0) == '#')
@@ -1336,7 +1371,16 @@ void CMainFrame::OnSockRead(int error)
 			cmd = params[0];
 
 			if (cmd.CompareNoCase(_T("PING")) == 0) {
-				OnPing();
+				CString code;
+
+				if (count2 >= 2) {
+					for (int i = 1; i < count2; i++) {
+						code += params[i];
+						if (i < count2 - 1)
+							code += ' ';
+					}
+				}
+				OnPing(code);
 			}
 			else {
 				//pView->AppendText(cmd += _T("\r\n"));
@@ -1508,7 +1552,7 @@ void CMainFrame::OnNoTopic(LPCTSTR channel)
 	CNo5TreeItem parent = m_tv.FindItem(m_server, TRUE, FALSE);
 	if (!m_tv.FindItem(channel, FALSE, TRUE))
 		m_tv.InsertItem(channel,6,6, parent, TVI_SORT);
-	GetMode(channel);
+	//GetMode(channel);
 }
 void CMainFrame::OnTopic(LPCTSTR channel, LPCTSTR topic)
 {
@@ -1523,7 +1567,7 @@ void CMainFrame::OnTopic(LPCTSTR channel, LPCTSTR topic)
 		p->AppendTextIrc(topic);
 	p->AppendText(_T("\n"));
 	p->ResetFormat();
-	GetMode(channel);
+	//GetMode(channel);
 
 }
 void CMainFrame::OnWhoSetTheTopic(LPCTSTR channel, LPCTSTR user, time_t time)
@@ -1591,6 +1635,14 @@ void CMainFrame::OnNamesInChannel(LPCTSTR channel, const CSimpleArray<CString>& 
 	}
 }
 
+void CMainFrame::OnNamesEnd(LPCTSTR channel)
+{
+	CView* pView = GetActiveView();
+	
+	GetMode(channel);
+	pView->AppendText(_T("end of users list\n"));
+}
+
 void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg)
 {
 	CString str = user; str += ':';
@@ -1600,32 +1652,40 @@ void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg)
 	p->SetTextColor(0x000088);
 	p->AppendText(str);
 	p->SetTextColor(0);
+	str = msg;
 	if (m_bNoColors)
-		p->AppendText(msg);
+		p->AppendText(str);
 	else {
-		p->AppendTextIrc(msg);
+		p->AppendTextIrc(str);
 		p->ResetFormat();
 	}
-	p->AppendText(_T("\n"));
+	p->SetSelEnd();
+	if (!m_nick.CompareNoCase(user)) {
+		/*p->SetSelEnd();
+		p->AppendText(_T("\r\n"));*/
+		//p->SetSelEnd();
+		p->AppendText(_T("\r\n"));
+	}
 }
 void CMainFrame::OnPrivateMsg(LPCTSTR channel, LPCTSTR from, LPCTSTR msg)
 {
-	if (wcschr(msg,'\x1')) { // ctcp
-		CView* pView = GetActiveView();
-		CString tag = RemoveDelimiters2(msg);
-		tag = tag.Trim();
-		if (!tag.Compare(_T("VERSION"))) {
-			AnswerVersionRequest(from);
-			GetMode(channel);
-		}
-		else if (!tag.Find(_T("PING"))) {
-			AnswerPingRequest(from);
-		}
-		else if (!tag.Compare(_T("USERINFO"))) {
-			AnswerUserinfoRequest(from);
-		}
-		else if (!tag.Compare(_T("TIME"))) {
-			AnswerTimeRequest(from);
+	if (m_nick.CompareNoCase(from)) {
+		if (wcschr(msg, '\x1')) { // ctcp
+			CView* pView = GetActiveView();
+			CString tag = RemoveDelimiters2(msg);
+			tag = tag.Trim();
+			if (!tag.Compare(_T("VERSION"))) {
+				AnswerVersionRequest(from);
+			}
+			else if (!tag.Find(_T("PING"))) {
+				AnswerPingRequest(from);
+			}
+			else if (!tag.Compare(_T("USERINFO"))) {
+				AnswerUserinfoRequest(from);
+			}
+			else if (!tag.Compare(_T("TIME"))) {
+				AnswerTimeRequest(from);
+			}
 		}
 	}
 	else {
@@ -1634,14 +1694,18 @@ void CMainFrame::OnPrivateMsg(LPCTSTR channel, LPCTSTR from, LPCTSTR msg)
 		p->AppendText(from);
 		p->AppendText(_T(": "));
 		p->SetTextColor(0);
+		CString str = msg;
+		str += "\r\n";
 		if (m_bNoColors) {
-			p->AppendText(msg);
+			p->AppendText(str);
 		}
 		else {
-			p->AppendTextIrc(msg);
+			p->AppendTextIrc(str);
 			p->ResetFormat();
 		}
-		p->AppendText(_T("\n"));
+		p->SetSelEnd();
+		if (!m_nick.CompareNoCase(from))
+			p->AppendText(_T("\r\n"));
 	}
 }
 
@@ -1753,16 +1817,11 @@ void CMainFrame::OnNotice(LPCTSTR channel, LPCTSTR user, LPCTSTR msg)
 	}
 	//pView->AppendText(_T("\n"));
 }
-void CMainFrame::OnPing()
+void CMainFrame::OnPing(LPCTSTR code)
 {
-	CStringA pong;
 	CView* pView = GetActiveView();
 
-	pong += "PONG ";
-	pong += m_nick;
-	pong += "\n";
-
-	m_sock.SendString(pong);
+	Pong(code);
 	pView->AppendText(_T("ping received - pong returned\r\n"));
 }
 void CMainFrame::OnUnknownCmd(LPCTSTR line)
@@ -1876,6 +1935,20 @@ void CMainFrame::GetMode(LPCTSTR NameOrChannel)
 	m_sock.SendString(cmd);
 }
 
+void CMainFrame::Pong(LPCTSTR code)
+{
+	CStringA pong;
+
+	pong += "PONG ";
+	if (!code)
+		pong += m_nick;
+	else if(lstrlen(code))
+		pong += code;
+	pong += "\r\n";
+
+	m_sock.SendString(pong);
+}
+
 void CMainFrame::RequestVersion(LPCTSTR from)
 {
 	SendPrivateMsg(from, _T("\001VERSION\001"));
@@ -1900,52 +1973,60 @@ void CMainFrame::RequestTime(LPCTSTR from)
 
 void CMainFrame::AnswerVersionRequest(LPCTSTR from)
 {
-	NO5TL::CVersionInfo vi;
-	CString tag;
-	CView* pView = GetActiveView();
+	if (m_bAllowCTCP) {
+		NO5TL::CVersionInfo vi;
+		CString tag;
+		CView* pView = GetActiveView();
 
-	BOOL res = vi.Init(PRODUCT_NAME); ATLASSERT(res);
-	CString product, version;
-	const int cp = 0x40904b0;
+		BOOL res = vi.Init(PRODUCT_NAME); ATLASSERT(res);
+		CString product, version;
+		const int cp = 0x40904b0;
 
-	vi.GetString(cp, _T("ProductName"), product);
-	vi.GetString(cp, _T("ProductVersion"), version);
-	tag.Format(_T("\001VERSION %s-%s-Windows by https://fioresoft.net\001"), (LPCTSTR)product, (LPCTSTR)version);
-	SendNoticeMsg(from, tag);
-	pView->AppendText(_T("Sent CTCP VERSION reply -> ") + tag + '\n');
+		vi.GetString(cp, _T("ProductName"), product);
+		vi.GetString(cp, _T("ProductVersion"), version);
+		tag.Format(_T("\001VERSION %s-%s-Windows by https://fioresoft.net\001"), (LPCTSTR)product, (LPCTSTR)version);
+		//SendNoticeMsg(from, tag);
+		pView->AppendText(_T("Sent CTCP VERSION reply -> ") + tag + '\n');
+	}
 }
 void CMainFrame::AnswerUserinfoRequest(LPCTSTR from)
 {
-	CString code;
+	if (m_bAllowCTCP) {
+		CString code;
 
-	code.Format(_T("\001USERINFO %s\001"), _T("this is just a test"));
-	SendNoticeMsg(from, code);
-	CView* pView = GetActiveView();
-	pView->AppendText(_T("Sent CTCP USERINFO reply -> ") + code + '\n');
+		code.Format(_T("\001USERINFO %s\001"), m_userinfo.IsEmpty() ? _T("there is nothing about me") : m_userinfo);
+		SendNoticeMsg(from, code);
+		CView* pView = GetActiveView();
+		pView->AppendText(_T("Sent CTCP USERINFO reply -> ") + code + '\n');
+	}
 
 }
 void CMainFrame::AnswerPingRequest(LPCTSTR from)
 {
-	time_t t = time(&t);
-	CString code;
+	if (m_bAllowCTCP){
+		time_t t = time(&t);
+		CString code;
 
-	code.Format(_T("\001PING %lu\001"), (unsigned int)t);
-	SendNoticeMsg(from, code);
-	CView* pView = GetActiveView();
-	pView->AppendText(_T("Sent CTCP PING reply -> ") + code + '\n');
+		code.Format(_T("\001PING %lu\001"), (unsigned int)t);
+		SendNoticeMsg(from, code);
+		CView * pView = GetActiveView();
+		pView->AppendText(_T("Sent CTCP PING reply -> ") + code + '\n');
+	}
 }
 void CMainFrame::AnswerTimeRequest(LPCTSTR from)
 {
-	time_t t = time(&t);
-	struct tm* ptm = localtime(&t);
-	CString s = asctime(ptm);
-	CString msg;
+	if (m_bAllowCTCP) {
+		time_t t = time(&t);
+		struct tm* ptm = localtime(&t);
+		CString s = asctime(ptm);
+		CString msg;
 
-	s.TrimRight();
-	msg.Format(_T("\001TIME %s\001"), (LPCTSTR)s);
-	SendNoticeMsg(from, msg);
-	CView* pView = GetActiveView();
-	pView->AppendText(_T("Sent CTCP TIME reply -> ") + msg + '\n');
+		s.TrimRight();
+		msg.Format(_T("\001TIME %s\001"), (LPCTSTR)s);
+		/*SendNoticeMsg(from, msg);*/
+		CView* pView = GetActiveView();
+		pView->AppendText(_T("Sent CTCP TIME reply -> ") + msg + '\n');
+	}
 }
 
 // CChannelsViewFrame

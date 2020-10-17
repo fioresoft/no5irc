@@ -206,6 +206,8 @@ private:
 	bool m_bNoColors; // channel supports colors or no
 	CImageListManaged m_il;
 	time_t m_t;	// PING request time
+	BOOL m_bAllowCTCP; // answer CTCP queries?
+	CString m_userinfo;
 	//
 	void CreateTreeView();
 	void CreateListView();
@@ -241,6 +243,7 @@ public:
 		m_server = _T("irc.freenode.net");
 		m_NameOrChannel = m_server;
 		m_bNoColors = true;
+		m_bAllowCTCP = FALSE;
 		//
 		//m_CmdBar.m_hIconChildMaximized = LoadIcon(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
 	}
@@ -273,13 +276,14 @@ public:
 		COMMAND_ID_HANDLER(ID_WINDOW_CASCADE, OnWindowCascade)
 		COMMAND_ID_HANDLER(ID_WINDOW_TILE_HORZ, OnWindowTile)
 		COMMAND_ID_HANDLER(ID_WINDOW_ARRANGE, OnWindowArrangeIcons)
-		CHAIN_COMMANDS_MEMBER_ID_RANGE(m_bottom, ID_EDIT_CLEAR, ID_EDIT_FIND_PREVIOUS)
+		COMMAND_ID_HANDLER(ID_VIEW_OPTIONS,OnViewOptions)
 		COMMAND_ID_HANDLER(ID_EDIT_INCFONT, OnIncFont)
 		COMMAND_ID_HANDLER(ID_EDIT_DECFONT, OnDecFont)
 		NOTIFY_HANDLER(IDC_LISTVIEW, NM_DBLCLK, OnLVDoubleClick)
 		NOTIFY_HANDLER(IDC_TREEVIEW, NM_DBLCLK, OnTVDoubleClick)
 		NOTIFY_HANDLER(IDC_LISTVIEW,LVN_COLUMNCLICK, OnColumnClick)
 		NOTIFY_HANDLER(IDC_TREEVIEW,NM_RCLICK,OnTVRightClick)
+		CHAIN_COMMANDS_MEMBER_ID_RANGE(m_bottom, ID_EDIT_CLEAR, ID_EDIT_FIND_PREVIOUS)
 		CHAIN_MDI_CHILD_COMMANDS()
 		CHAIN_MSG_MAP(CUpdateUI<CMainFrame>)
 		CHAIN_MSG_MAP(_baseClass)
@@ -308,6 +312,7 @@ public:
 	LRESULT OnWindowArrangeIcons(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnIncFont(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnDecFont(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnViewOptions(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnTabSelChange(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/);
 	LRESULT OnTabSelChanging(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/);
 	LRESULT OnTabClose(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled);
@@ -344,13 +349,14 @@ public:
 	virtual void OnTopic(LPCTSTR channel, LPCTSTR topic);
 	virtual void OnWhoSetTheTopic(LPCTSTR channel, LPCTSTR user, time_t time);
 	virtual void OnNamesInChannel(LPCTSTR channel,const CSimpleArray<CString>& args);
+	virtual void OnNamesEnd(LPCTSTR channel);
 	virtual void OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg);
 	virtual void OnPrivateMsg(LPCTSTR channel, LPCTSTR from, LPCTSTR msg);
 	virtual void OnUserQuit(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);
 	virtual void OnUserJoin(LPCTSTR channel, LPCTSTR user);
 	virtual void OnUserPart(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);
 	virtual void OnNotice(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);
-	virtual void OnPing();
+	virtual void OnPing(LPCTSTR code);
 	virtual void OnUnknownCmd(LPCTSTR line);
 	//
 	virtual void SendChannelMsg(LPCTSTR channel, LPCTSTR msg);
@@ -364,6 +370,7 @@ public:
 	virtual void SendUser(LPCTSTR user,LPCTSTR realname);
 	virtual void ListChannels();
 	virtual void GetMode(LPCTSTR NameOrChannel);
+	virtual void Pong(LPCTSTR code);
 	virtual void RequestVersion(LPCTSTR from);
 	virtual void RequestUserinfo(LPCTSTR from);
 	virtual void RequestPing(LPCTSTR from);
