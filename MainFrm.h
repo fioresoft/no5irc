@@ -6,10 +6,8 @@
 #include "Path.h"
 #include "IIRCEvents.h"
 #include "IIrc.h"
-
-#define CHAIN_COMMANDS_MEMBER_ID_RANGE(theChainMember, idFirst, idLast) \
-    if(uMsg == WM_COMMAND && (LOWORD(wParam) >= idFirst && LOWORD(wParam) <=idLast) && (theChainMember.m_hWnd == GetFocus())) \
-        CHAIN_MSG_MAP_MEMBER(theChainMember)
+#include "usermsgs.h"
+#include "View.h"
 
 class CMainFrame;
 
@@ -90,6 +88,7 @@ public:
 		NOTIFY_HANDLER(IDC_TREEVIEW, NM_DBLCLK, OnTVDoubleClick)
 		NOTIFY_HANDLER(IDC_LISTVIEW, LVN_COLUMNCLICK, OnColumnClick)
 		NOTIFY_HANDLER(IDC_TREEVIEW, NM_RCLICK, OnTVRightClick)
+		NOTIFY_HANDLER(IDC_TREEVIEW, TVN_GETINFOTIP,OnTVGetInfoTip)
 		//FORWARD_NOTIFICATIONS()
 		CHAIN_MSG_MAP(_baseClass)
 	END_MSG_MAP()
@@ -110,6 +109,7 @@ public:
 	LRESULT OnTVDoubleClick(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
 	LRESULT OnColumnClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled);
 	LRESULT OnTVRightClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled);
+	LRESULT OnTVGetInfoTip(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled);
 };
 
 template< class T, class TTabCtrl >
@@ -178,6 +178,18 @@ class CMainFrame :
 	typedef CDotNetTabCtrl<CTabViewTabItem> _tabControl;
 public:
 	TTabCtrl& TabCtrl = GetMDITabCtrl();
+	struct MarqueeOptions
+	{
+		COLORREF fore;
+		COLORREF back;
+		int Elapse;
+		MarqueeOptions()
+		{
+			fore = 0xffffff;
+			back = 0x008000;
+			Elapse = 4;
+		}
+	};
 private:
 	CWindow  TabOwnerParent = GetTabOwnerParent();
 	CTabbedMDICommandBarCtrl m_CmdBar;
@@ -194,6 +206,7 @@ private:
 	CChannelsViewFrame m_ChannelsView;
 	CMySocket m_sock;
 	CString m_server;
+	CPort m_port;
 	CString m_nick;
 	CString m_name;
 	CString m_user;
@@ -208,6 +221,7 @@ private:
 	time_t m_t;	// PING request time
 	BOOL m_bAllowCTCP; // answer CTCP queries?
 	CString m_userinfo;
+	MarqueeOptions mo;
 	//
 	void CreateTreeView();
 	void CreateListView();
@@ -220,6 +234,8 @@ private:
 	bool ParseUserName(const CString& user, CString& nick, CString& name, CString& ip);
 	void CreateView(LPCTSTR name = NULL, ViewType type = VIEW_NONE);
 public:
+	bool m_bDarkMode;
+	//
 	ViewData* GetViewData();
 	CView* GetActiveView();
 	ViewData* GetViewDataByName(LPCTSTR name);
@@ -230,7 +246,7 @@ public:
 	bool ActivateViewByName(LPCTSTR name);
 public:
 	DECLARE_FRAME_WND_CLASS(NULL, IDR_MAINFRAME)
-	CMainFrame() :m_sock((ISocketEvents*)this),m_tab(*this),m_ChannelsView(m_lv,this)
+	CMainFrame() :m_sock((ISocketEvents*)this),m_tab(*this),m_ChannelsView(m_lv,this),m_bottom(*this)
 	{
 		m_bInChannel = false;
 		m_servers.Add(_T("irc.freenode.net"));
@@ -242,8 +258,9 @@ public:
 		//
 		m_server = _T("irc.freenode.net");
 		m_NameOrChannel = m_server;
-		m_bNoColors = true;
+		m_bNoColors = false;
 		m_bAllowCTCP = FALSE;
+		m_bDarkMode = false;
 		//
 		//m_CmdBar.m_hIconChildMaximized = LoadIcon(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
 	}
@@ -255,6 +272,8 @@ public:
 	BEGIN_UPDATE_UI_MAP(CMainFrame)
 		UPDATE_ELEMENT(ID_VIEW_TOOLBAR, UPDUI_MENUPOPUP)
 		UPDATE_ELEMENT(ID_VIEW_STATUS_BAR, UPDUI_MENUPOPUP)
+		UPDATE_ELEMENT(ID_VIEW_MARQUEE, UPDUI_MENUPOPUP)
+		UPDATE_ELEMENT(ID_VIEW_DARKMODE,UPDUI_MENUPOPUP)
 	END_UPDATE_UI_MAP()
 
 	BEGIN_MSG_MAP(CMainFrame)
@@ -266,23 +285,28 @@ public:
 		MESSAGE_HANDLER(WM_CHANNELSFILEOPEN,OnChannelsFileOpen)
 		MESSAGE_HANDLER(WM_CHANNELSFILESAVE, OnChannelsFileSave)
 		MESSAGE_HANDLER(WM_CHANNELSFILEUPDATE, OnChannelsFileUpdate)
+		MESSAGE_HANDLER(WM_ONFONTCHANGE,OnFontChange)
 		COMMAND_ID_HANDLER(ID_APP_EXIT, OnFileExit)
 		COMMAND_ID_HANDLER(ID_FILE_NEW, OnFileNew)
 		COMMAND_ID_HANDLER(ID_FILE_SAVE,OnFileSave)
 		COMMAND_ID_HANDLER(ID_FILE_PRINT,OnFilePrint)
 		COMMAND_ID_HANDLER(ID_VIEW_TOOLBAR, OnViewToolBar)
 		COMMAND_ID_HANDLER(ID_VIEW_STATUS_BAR, OnViewStatusBar)
+		COMMAND_ID_HANDLER(ID_VIEW_MARQUEE, OnViewMarquee)
 		COMMAND_ID_HANDLER(ID_APP_ABOUT, OnAppAbout)
 		COMMAND_ID_HANDLER(ID_WINDOW_CASCADE, OnWindowCascade)
 		COMMAND_ID_HANDLER(ID_WINDOW_TILE_HORZ, OnWindowTile)
 		COMMAND_ID_HANDLER(ID_WINDOW_ARRANGE, OnWindowArrangeIcons)
 		COMMAND_ID_HANDLER(ID_VIEW_OPTIONS,OnViewOptions)
+		COMMAND_ID_HANDLER(ID_VIEW_DARKMODE, OnViewDarkMode)
 		COMMAND_ID_HANDLER(ID_EDIT_INCFONT, OnIncFont)
 		COMMAND_ID_HANDLER(ID_EDIT_DECFONT, OnDecFont)
+		COMMAND_HANDLER(IDC_MARQUEE1, MQN_CHANGED,OnMarqueeChange)
 		NOTIFY_HANDLER(IDC_LISTVIEW, NM_DBLCLK, OnLVDoubleClick)
 		NOTIFY_HANDLER(IDC_TREEVIEW, NM_DBLCLK, OnTVDoubleClick)
 		NOTIFY_HANDLER(IDC_LISTVIEW,LVN_COLUMNCLICK, OnColumnClick)
 		NOTIFY_HANDLER(IDC_TREEVIEW,NM_RCLICK,OnTVRightClick)
+		NOTIFY_HANDLER(IDC_TREEVIEW, TVN_GETINFOTIP, OnTVGetInfoTip)
 		CHAIN_COMMANDS_MEMBER_ID_RANGE(m_bottom, ID_EDIT_CLEAR, ID_EDIT_FIND_PREVIOUS)
 		CHAIN_MDI_CHILD_COMMANDS()
 		CHAIN_MSG_MAP(CUpdateUI<CMainFrame>)
@@ -300,12 +324,14 @@ public:
 	LRESULT OnChannelsFileOpen(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnChannelsFileSave(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnChannelsFileUpdate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnFontChange(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFilePrint(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFileSave(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnViewToolBar(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnViewStatusBar(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnViewMarquee(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnAppAbout(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnWindowCascade(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnWindowTile(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
@@ -313,6 +339,8 @@ public:
 	LRESULT OnIncFont(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnDecFont(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnViewOptions(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnViewDarkMode(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnMarqueeChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnTabSelChange(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/);
 	LRESULT OnTabSelChanging(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/);
 	LRESULT OnTabClose(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled);
@@ -322,6 +350,7 @@ public:
 	LRESULT OnTVDoubleClick(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
 	LRESULT OnColumnClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled);
 	LRESULT OnTVRightClick(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
+	LRESULT OnTVGetInfoTip(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
 
 	//
 	virtual void OnSockError(int error);
@@ -369,6 +398,8 @@ public:
 	virtual void SendNick(LPCTSTR nick);
 	virtual void SendUser(LPCTSTR user,LPCTSTR realname);
 	virtual void ListChannels();
+	virtual void ListChannelNames(LPCTSTR channel);
+	virtual void GetTopic(LPCTSTR channel);
 	virtual void GetMode(LPCTSTR NameOrChannel);
 	virtual void Pong(LPCTSTR code);
 	virtual void RequestVersion(LPCTSTR from);
@@ -379,4 +410,7 @@ public:
 	virtual void AnswerUserinfoRequest(LPCTSTR from);
 	virtual void AnswerPingRequest(LPCTSTR from);
 	virtual void AnswerTimeRequest(LPCTSTR from);
+	virtual void WhoIs(LPCTSTR nick);
+	virtual void Who(LPCTSTR nick);
+	virtual void WhoWas(LPCTSTR nick);
 };

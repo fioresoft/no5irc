@@ -5,8 +5,12 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "View.h"
+#include "ChildFrm.h"
+#include "MainFrm.h"
 #include "AboutDlg.h"
 #include "usermsgs.h"
+
+BOOL ToolbarAddControl(HWND hToolBar, HWND hWnd, int pos, int count, BOOL bComboBox);
 
 /*
 *
@@ -192,50 +196,56 @@ LRESULT CView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOO
 	bHandled = FALSE;
 	return 0;
 }
+//
 
-LRESULT CBottom::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
+void CBottom::CreateClient()
 {
-	if (wParam == VK_RETURN) {
-		CString str;
-		GetWindowText(str);
-		str += _T("\r\n");
-		SetWindowText(_T(""));
-		m_frame.SendMessage(WM_MSGFROMBOTTOM, (WPARAM)(LPCTSTR)str);
-		bHandled = TRUE;
-	}
-	else
-		bHandled = FALSE;
+	m_client.Create(m_hWnd, rcDefault, 0, WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | ES_SUNKEN, WS_EX_CLIENTEDGE,
+		IDR_BOTTOM_FRAME);
+}
+
+void CBottom::CreateToolBar()
+{
+	HWND hWndToolBar = CreateSimpleToolBarCtrl(m_hWnd, IDR_BOTTOM_FRAME, FALSE, ATL_SIMPLE_TOOLBAR_PANE_STYLE);
+
+	m_tb.Attach(hWndToolBar);
+	CreateSimpleReBar(ATL_SIMPLE_REBAR_NOBORDER_STYLE);
+	AddSimpleReBarBand(hWndToolBar, NULL, TRUE);
+	UIAddToolBar(hWndToolBar);
+	m_tb.SetButtonInfo(0, TBIF_BYINDEX | TBIF_STATE, 0, TBSTATE_HIDDEN, NULL, 0, 0, 0, 0);
+	m_tb.SetButtonInfo(ID_EDIT_BOLD, TBIF_STATE, 0, TBSTATE_ENABLED, NULL, 0, 0, 0, 0);
+	m_tb.SetButtonInfo(ID_EDIT_ITALIC, TBIF_STATE , 0, TBSTATE_ENABLED, NULL, 0, 0, 0, 0);
+	m_tb.SetButtonInfo(ID_EDIT_UNDERLINE, TBIF_STATE, 0, TBSTATE_ENABLED, NULL, 0, 0, 0, 0);
+}
+
+LRESULT CBottom::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	CreateToolBar();
+	CreateComboFonts();
+	CreateColorCombos();
+	CreateClient();
+	m_hAccel = ::LoadAccelerators(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
+	m_hWndClient = m_client;
 	return 0;
 }
 
-LRESULT CBottom::OnChar(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
+
+BOOL CBottom::PreTranslateMessage(MSG* pMsg)
 {
-	if (!GetWindowTextLength()) {
-		if (wParam == '/') {
-			CString cmd;
-			CString txt = '/';
-			if (OnEditComplete(cmd)) {
-				txt += cmd;
-				AppendText(txt);
-			}
-			bHandled = TRUE;
-		}
-		else
-			bHandled = FALSE;
-	}
-	else
-		bHandled = FALSE;
-	if (wParam == '\r' || wParam == '\n') {
-		bHandled = TRUE;
-	}
-	return 0;
+	if ((m_hAccel != NULL) && ::TranslateAccelerator(this->m_hWnd, m_hAccel, pMsg))
+		return TRUE;
+	return FALSE;
+}
+BOOL CBottom::OnIdle()
+{
+	return FALSE;
 }
 
 BOOL CBottom::OnEditComplete(CString& cmd)
 {
 	BOOL res = FALSE;
 
-	if (GetFocus() == m_hWnd) {
+	if (true /*GetFocus() == m_hWnd*/) {
 		CPoint ptCaret;
 		CWindow frame = GetParent();
 		CRect rcEdit;
@@ -259,6 +269,184 @@ BOOL CBottom::OnEditComplete(CString& cmd)
 		}
 		::SetFocus(hWndFocus);
 
+	}
+	return res;
+}
+
+void CBottom::CreateComboFonts()
+{
+	CRect rc;
+
+	rc.left = rc.top = 0;
+	rc.right = 0;
+	rc.bottom = 250;
+	m_cbFonts.Create(m_tb, rc, (LPCTSTR)0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | \
+		CBS_DROPDOWNLIST | CBS_SORT | CBS_OWNERDRAWVARIABLE | CBS_HASSTRINGS, 0, IDC_COMBO_FONTS);
+	m_cbFonts.SetExtendedFontStyle(FPS_EX_TYPEICON | FPS_EX_SHOWFACE);
+	ToolbarAddControl(m_tb, m_cbFonts, 1, 7, TRUE);
+	m_cbFonts.Dir();
+	int index = m_cbFonts.FindString(0, _T("Arial"));
+	if (index >= 0)
+		m_cbFonts.SetCurSel(index);
+	UpdateLayout(FALSE);
+}
+
+void CBottom::CreateColorCombos()
+{
+	CRect rc;
+
+	rc.bottom = 250;
+	m_cbFore.Create(m_tb, rc, 0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED, 0, IDC_COMBO_FORE);
+	ToolbarAddControl(m_tb, m_cbFore, 12, 3, TRUE);
+	for (int i = 0; i <= 15; i++) {
+		m_cbFore.AddColor(i, ColorFromCode(i));
+	}
+	m_cbBack.Create(m_tb, rc, 0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED, 0, IDC_COMBO_BACK);
+	ToolbarAddControl(m_tb, m_cbBack, 16, 3, TRUE);
+	for (int i = 0; i <= 15; i++) {
+		m_cbBack.AddColor(i, ColorFromCode(i));
+	}
+	m_cbFore.SelectColor(0);
+	m_cbBack.SelectColor(0xffffff);
+}
+
+void CBottom::DisableFormat()
+{
+	m_tb.SetButtonInfo(ID_EDIT_BOLD, TBIF_STATE, 0, TBSTATE_INDETERMINATE, NULL, 0, 0, 0, 0);
+	m_tb.SetButtonInfo(ID_EDIT_ITALIC, TBIF_STATE, 0, TBSTATE_INDETERMINATE, NULL, 0, 0, 0, 0);
+	m_tb.SetButtonInfo(ID_EDIT_UNDERLINE, TBIF_STATE, 0, TBSTATE_INDETERMINATE, NULL, 0, 0, 0, 0);
+	m_cbFore.EnableWindow(FALSE);
+	m_cbBack.EnableWindow(FALSE);
+}
+
+void CBottom::EnableFormat()
+{
+	m_tb.SetButtonInfo(ID_EDIT_BOLD, TBIF_STATE, 0, TBSTATE_ENABLED, NULL, 0, 0, 0, 0);
+	m_tb.SetButtonInfo(ID_EDIT_ITALIC, TBIF_STATE, 0, TBSTATE_ENABLED, NULL, 0, 0, 0, 0);
+	m_tb.SetButtonInfo(ID_EDIT_UNDERLINE, TBIF_STATE, 0, TBSTATE_ENABLED, NULL, 0, 0, 0, 0);
+	m_cbFore.EnableWindow(TRUE);
+	m_cbBack.EnableWindow(TRUE);
+}
+
+LRESULT CBottom::OnFontsSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	int index = m_cbFonts.GetCurSel();
+	CString font;
+	m_cbFonts.GetLBText(index, font);
+	return m_frame.SendMessage(WM_ONFONTCHANGE, 0, (LPARAM)(LPCTSTR)font);
+}
+
+LRESULT CBottom::OnBold(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	static bool checked = false;
+
+	checked = !checked;
+	m_client.AppendText(_T("\002"), TRUE);
+	return 0;
+}
+LRESULT CBottom::OnItalic(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	static bool checked = false;
+
+	checked = !checked;
+	m_client.AppendText(_T("\x1d"), TRUE);
+	return 0;
+}
+LRESULT CBottom::OnUnderline(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	static bool checked = false;
+
+	checked = !checked;
+	m_client.AppendText(_T("\x1f"), TRUE);
+	return 0;
+}
+LRESULT CBottom::OnForeSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	int fore = m_cbFore.GetCurSel();
+	int back = m_cbBack.GetCurSel();
+	CString code;
+
+	code.Format(_T("\003%02d,%02d"), fore, back);
+	m_client.AppendText(code, TRUE);
+	return 0;
+}
+LRESULT CBottom::OnBackSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	int fore = m_cbFore.GetCurSel();
+	int back = m_cbBack.GetCurSel();
+	CString code;
+
+	/*code.Format(_T("\003%02d,%02d"), fore, back);
+	m_client.AppendText(code, TRUE);*/
+	return 0;
+}
+
+/// <summary>
+/// 
+/// </summary>
+/// <param name=""></param>
+/// <param name="wParam"></param>
+/// <param name=""></param>
+/// <param name="bHandled"></param>
+/// <returns></returns>
+
+LRESULT CBottomClient::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	if (wParam == VK_RETURN) {
+		CString str;
+		GetWindowText(str);
+		str += _T("\r\n");
+		SetWindowText(_T(""));
+		m_frame.SendMessage(WM_MSGFROMBOTTOM, (WPARAM)(LPCTSTR)str);
+		bHandled = TRUE;
+	}
+	else
+		bHandled = FALSE;
+	return 0;
+}
+
+LRESULT CBottomClient::OnChar(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	if (!GetWindowTextLength()) {
+		if (wParam == '/') {
+			CString cmd;
+			CString txt = '/';
+			if (m_pBottom->OnEditComplete(cmd)) {
+				txt += cmd;
+				AppendText(txt);
+			}
+			bHandled = TRUE;
+		}
+		else
+			bHandled = FALSE;
+	}
+	else
+		bHandled = FALSE;
+	if (wParam == '\r' || wParam == '\n') {
+		bHandled = TRUE;
+	}
+	return 0;
+}
+
+BOOL ToolbarAddControl(HWND hToolBar, HWND hWnd, int pos, int count, BOOL bComboBox)
+{
+	CToolBarCtrl tb = hToolBar;
+	CWindow wnd = hWnd;
+	CRect rcButton;
+	BOOL res;
+
+	res = tb.GetItemRect(pos, &rcButton);
+	if (res) {
+		if (bComboBox) {
+			CRect rcWnd;
+			CComboBox cb = hWnd;
+
+			cb.SetItemHeight(-1, rcButton.Height() - 5);
+			wnd.GetWindowRect(&rcWnd);
+			wnd.MoveWindow(rcButton.left, rcButton.top, count * rcButton.Width(), rcWnd.Height());
+		}
+		else
+			wnd.MoveWindow(rcButton.left, rcButton.top, count * rcButton.Width(), rcButton.Height());
 	}
 	return res;
 }

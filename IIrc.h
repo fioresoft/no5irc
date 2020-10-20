@@ -11,6 +11,8 @@ struct IIrc
 	virtual void SendNick(LPCTSTR nick) = 0;
 	virtual void SendUser(LPCTSTR user,LPCTSTR realname) = 0;
 	virtual void ListChannels() = 0;
+	virtual void ListChannelNames(LPCTSTR channel) = 0;
+	virtual void GetTopic(LPCTSTR channel) = 0;
 	virtual void GetMode(LPCTSTR NameOrChannel) = 0;
 	virtual void Pong(LPCTSTR code) = 0;
 	virtual void RequestVersion(LPCTSTR from) = 0;
@@ -21,5 +23,8 @@ struct IIrc
 	virtual void AnswerUserinfoRequest(LPCTSTR from) = 0;
 	virtual void AnswerPingRequest(LPCTSTR from) = 0;
 	virtual void AnswerTimeRequest(LPCTSTR from) = 0;
+	virtual void WhoIs(LPCTSTR nick) = 0;
+	virtual void Who(LPCTSTR nick) = 0;
+	virtual void WhoWas(LPCTSTR nick) = 0;
 };
 

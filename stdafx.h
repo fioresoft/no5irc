@@ -15,8 +15,12 @@
 #ifdef _DEBUG
 #define PRODUCT_NAME	_T("irc11.exe")
 #else
-#define PRODUCT_NAME	_T("no5 irc.exe")
+#define PRODUCT_NAME	_T("irc11.exe")
 #endif
+
+#define CHAIN_COMMANDS_MEMBER_ID_RANGE(theChainMember, idFirst, idLast) \
+    if(uMsg == WM_COMMAND && (LOWORD(wParam) >= idFirst && LOWORD(wParam) <=idLast)/* && (theChainMember.m_hWnd == GetFocus())*/) \
+        CHAIN_MSG_MAP_MEMBER(theChainMember)
 
 #include <strsafe.h>
 #include <ctime>
@@ -38,6 +42,7 @@ extern CAppModule _Module;
 #include <atlctrlw.h>
 #include <atlcoll.h>
 #include <atlctrlx.h>
+#include <atlddx.h>
 #include <winsock2.h>
 //#include <atlsplit.h> with this doesn't work
 #include "../NO5TL/atlsplit2.h"
@@ -57,6 +62,8 @@ extern CAppModule _Module;
 //#include "..\NO5TL\MarqueeMM.h"
 #include "..\NO5TL\MarqueeWnd.h"
 #include "..\NO5TL\VersionInfo.h"
+#include "viksoe/FontCombo.h"
+#include "viksoe/ColorCombo.h"
 using namespace NO5TL;
 
 

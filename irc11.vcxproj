@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -249,16 +249,21 @@
     <Image Include="res\21.ico" />
     <Image Include="res\23.ico" />
     <Image Include="res\4.ico" />
+    <Image Include="res\bold.ico" />
     <Image Include="res\channels.bmp" />
     <Image Include="res\icon1.ico" />
     <Image Include="res\icon2.ico" />
+    <Image Include="res\icon9.ico" />
     <Image Include="res\irc11.ico" />
     <Image Include="res\irc11Doc.ico" />
+    <Image Include="res\italic.ico" />
     <Image Include="res\logo4.ico" />
     <Image Include="res\toolbar.bmp" />
     <Image Include="res\toolbar1.bmp" />
     <Image Include="res\toolbar2.bmp" />
     <Image Include="res\toolbar3.bmp" />
+    <Image Include="res\toolbar4.bmp" />
+    <Image Include="res\underline.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
