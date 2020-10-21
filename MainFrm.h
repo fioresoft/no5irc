@@ -197,8 +197,8 @@ private:
 	CBottom m_bottom;
 	CMyTabbedChildWindow m_tab;
 	CSplitterWindow m_vsplitter;
-	CListBox m_lb;
-	CListBox m_lb2;
+	//CListBox m_lb;
+	//CListBox m_lb2;
 	CFont m_font;
 	CNo5TreeCtrl m_tv;
 	CListViewCtrl m_lv;
@@ -286,6 +286,7 @@ public:
 		MESSAGE_HANDLER(WM_CHANNELSFILESAVE, OnChannelsFileSave)
 		MESSAGE_HANDLER(WM_CHANNELSFILEUPDATE, OnChannelsFileUpdate)
 		MESSAGE_HANDLER(WM_ONFONTCHANGE,OnFontChange)
+		MESSAGE_HANDLER(WM_ONFONTSIZECHANGE, OnFontSizeChange)
 		COMMAND_ID_HANDLER(ID_APP_EXIT, OnFileExit)
 		COMMAND_ID_HANDLER(ID_FILE_NEW, OnFileNew)
 		COMMAND_ID_HANDLER(ID_FILE_SAVE,OnFileSave)
@@ -325,6 +326,7 @@ public:
 	LRESULT OnChannelsFileSave(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnChannelsFileUpdate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnFontChange(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
+	LRESULT OnFontSizeChange(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFilePrint(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
@@ -380,7 +382,7 @@ public:
 	virtual void OnNamesInChannel(LPCTSTR channel,const CSimpleArray<CString>& args);
 	virtual void OnNamesEnd(LPCTSTR channel);
 	virtual void OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg);
-	virtual void OnPrivateMsg(LPCTSTR channel, LPCTSTR from, LPCTSTR msg);
+	virtual void OnPrivateMsg(LPCTSTR from, LPCTSTR msg);
 	virtual void OnUserQuit(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);
 	virtual void OnUserJoin(LPCTSTR channel, LPCTSTR user);
 	virtual void OnUserPart(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);

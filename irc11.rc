@@ -79,11 +79,14 @@ BEGIN
     BUTTON      ID_BUTTON32794
     BUTTON      ID_BUTTON32795
     BUTTON      ID_BUTTON32796
+    SEPARATOR
     BUTTON      ID_BUTTON32798
+    BUTTON      ID_BUTTON32808
+    BUTTON      ID_BUTTON32809
+    SEPARATOR
     BUTTON      ID_EDIT_BOLD
     BUTTON      ID_EDIT_ITALIC
     BUTTON      ID_EDIT_UNDERLINE
-    SEPARATOR
     BUTTON      ID_BUTTON32802
     BUTTON      ID_BUTTON32803
     BUTTON      ID_BUTTON32804
@@ -245,7 +248,7 @@ END
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION 1,0,1,0
- PRODUCTVERSION 0,6,1,4
+ PRODUCTVERSION 0,6,1,5
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -267,7 +270,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright 2020"
             VALUE "OriginalFilename", "irc09.exe"
             VALUE "ProductName", "NO5 IRC"
-            VALUE "ProductVersion", "0.6.1.4"
+            VALUE "ProductVersion", "0.6.1.5"
         END
     END
     BLOCK "VarFileInfo"

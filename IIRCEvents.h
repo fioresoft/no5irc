@@ -16,7 +16,7 @@ struct IIRCEvents
 	virtual void OnNamesInChannel(LPCTSTR channel, const CSimpleArray<CString>& args) = 0;
 	virtual void OnNamesEnd(LPCTSTR channel) = 0;
 	virtual void OnChannelMsg(LPCTSTR channel,LPCTSTR user,LPCTSTR msg) = 0;
-	virtual void OnPrivateMsg(LPCTSTR channel, LPCTSTR from, LPCTSTR msg) = 0;
+	virtual void OnPrivateMsg(LPCTSTR from, LPCTSTR msg) = 0;
 	virtual void OnUserQuit(LPCTSTR channel, LPCTSTR user, LPCTSTR msg) = 0;
 	virtual void OnUserJoin(LPCTSTR channel, LPCTSTR user) = 0;
 	virtual void OnUserPart(LPCTSTR channel, LPCTSTR user, LPCTSTR msg) = 0;

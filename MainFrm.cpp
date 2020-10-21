@@ -200,8 +200,18 @@ LRESULT CMainFrame::OnMDIActivate(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, B
 	ATLASSERT(p && (!p->name.IsEmpty()) && p->pView);
 
 	m_NameOrChannel = p->name;
-	if (p->type == VIEW_CHANNEL)
+	if (p->type == VIEW_CHANNEL) {
 		m_bInChannel = true;
+		m_bNoColors = p->m_bNoColors;
+
+		if (m_bNoColors) {
+			// disable formatting elements
+			m_bottom.DisableFormat();
+		}
+		else {
+			m_bottom.EnableFormat();
+		}
+	}
 	else
 		m_bInChannel = false;
 	return 0;
@@ -315,6 +325,17 @@ LRESULT CMainFrame::OnFontChange(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam
 	if (p) {
 		LPCTSTR font = LPCTSTR(lParam);
 		p->SetTextFontName(font, SCF_ALL);
+	}
+	return 0;
+}
+
+LRESULT CMainFrame::OnFontSizeChange(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
+{
+	CView* p = GetActiveView();
+
+	if (p) {
+		int size = int(lParam);
+		p->SetTextHeight(size, SCF_ALL);
 	}
 	return 0;
 }
@@ -677,9 +698,7 @@ void CMainFrame::CreateView(LPCTSTR name, ViewType type)
 {
 	CChildFrame* pChild = new CChildFrame(name, type, *this);
 	pChild->CreateEx(m_hWndMDIClient);
-	//pChild->SetIcon(LoadIcon(_Module.GetModuleInstance(),MAKEINTRESOURCE(IDR_MAINFRAME)), FALSE);
-
-	//pChild->SetTabText(name);
+	
 	pChild->SetTitle(name, true);
 	pChild->m_view.SetAutoURLDetect();
 	pChild->m_view.SetEventMask(ENM_LINK);
@@ -871,36 +890,35 @@ LRESULT CMainFrame::OnMsgFromBottom(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lPara
 				}
 				msg.Append(_T("\r\n"));
 				m_sock.Send(CT2CA(msg), msg.GetLength());
+				CString s;
+				for (int i = 2; i < arr.GetSize(); i++) {
+					s += arr[i];
+				}
 				if (count >= 2 && (!arr[0].CompareNoCase(_T("/PRIVMSG"))) && (!arr[1].IsEmpty())) {
 					if (arr[1].GetAt(0) != '#') {
-						CString s;
 						CView* pView = CreatePrivateChannel(arr[1]);
-						OnPrivateMsg(arr[1], m_nick, msg);
+						OnPrivateMsg(m_nick, s);
 					}
 					else {
 						CView* pView = CreateChannel(arr[1]);
 						ATLASSERT(arr[1] == '#');
-						OnChannelMsg(arr[1], m_nick, msg);
+						OnChannelMsg(arr[1], m_nick, s);
 					}
 				}
 			}
 			else if (!m_bInChannel) {
 				ViewData* p = GetViewData();
-				CView* pView = CreatePrivateChannel(p->name);
+				//CView* pView = CreatePrivateChannel(p->name);
 				
 				SendPrivateMsg(p->name, msg);
-
-				pView->SetSelEnd();
-				pView->SetTextColor(0xaa0000);
-				pView->AppendText(m_nick);
-				pView->AppendText(_T(": "));
-				pView->ResetFormat();
-				pView->AppendText(msg);
+				OnPrivateMsg(m_nick, msg);
 			}
 			else if (m_bInChannel) {
-				CView* pView = CreateChannel(m_NameOrChannel);
-				SendChannelMsg(m_NameOrChannel, msg);
-				OnChannelMsg(m_NameOrChannel, m_nick, msg);
+				ViewData* p = GetViewData();
+				ATLASSERT(p->type == ViewType::VIEW_CHANNEL);
+				//CView* pView = CreateChannel(m_NameOrChannel);
+				SendChannelMsg(p->name, msg);
+				OnChannelMsg(p->name, m_nick, msg);
 			}
 		}
 	}
@@ -1150,7 +1168,7 @@ void CMainFrame::OnLogin()
 			}
 		}
 		if (res) {
-			m_tv.InsertItem(m_server,6,6, NULL, TVI_ROOT);
+			m_tv.InsertItem(m_server, 8,8,NULL, TVI_ROOT);
 		}
 	}
 
@@ -1445,11 +1463,11 @@ void CMainFrame::OnSockRead(int error)
 					channel = params[2];
 					if (channel[0] == '#') {
 						m_bInChannel = true;
-						m_NameOrChannel = channel;
+						//m_NameOrChannel = channel;
 					}
 					else {
 						m_bInChannel = false;
-						m_NameOrChannel.Empty();
+						m_NameOrChannel = channel;
 					}
 				}
 
@@ -1464,7 +1482,7 @@ void CMainFrame::OnSockRead(int error)
 					OnChannelMsg(channel,nick, msg);
 				}
 				else {
-					OnPrivateMsg(channel, nick, msg);
+					OnPrivateMsg(nick, msg);
 				}
 			}
 			else if (!code.CompareNoCase(_T("QUIT"))) {
@@ -1488,16 +1506,12 @@ void CMainFrame::OnSockRead(int error)
 				CString nick, user, ip;
 
 				channel = params[2];
-				m_NameOrChannel = channel;
+				//m_NameOrChannel = channel;
 				bool b = ParseUserName(str, nick, user, ip);
 				ATLASSERT(nick[0] != ':');
 				OnUserJoin(channel, nick);
 			}
 			else if (!code.CompareNoCase(_T("PART"))) {
-				CView* p = GetViewByName(m_NameOrChannel);
-
-				if (!p || !p->IsWindow())
-					continue;
 				str = params[0];
 				CString nick, user, ip;
 				bool b = ParseUserName(str, nick, user, ip);
@@ -1646,6 +1660,7 @@ void CMainFrame::OnChannelMode(LPCTSTR channel, LPCTSTR modes)
 {
 	CView* pView = GetActiveView();
 	CString msg;
+	ViewData* data = GetViewDataByName(channel);
 
 	if(wcschr(modes,'c') != NULL)
 		m_bNoColors = true;
@@ -1658,6 +1673,8 @@ void CMainFrame::OnChannelMode(LPCTSTR channel, LPCTSTR modes)
 		m_bottom.DisableFormat();
 	else
 		m_bottom.EnableFormat();
+
+	data->m_bNoColors = m_bNoColors;
 }
 
 void CMainFrame::OnUserMode(LPCTSTR user, LPCTSTR modes)
@@ -1712,8 +1729,9 @@ void CMainFrame::OnNoTopic(LPCTSTR channel)
 	CView* p = CreateViewIfNoExist(channel,ViewType::VIEW_CHANNEL);
 
 	CNo5TreeItem parent = m_tv.FindItem(m_server, TRUE, FALSE);
-	if (!m_tv.FindItem(channel, FALSE, TRUE))
-		m_tv.InsertItem(channel,6,6, parent, TVI_SORT);
+	if (!m_tv.FindItem(channel, FALSE, TRUE)) {
+		m_tv.InsertItem(channel,8,8,parent, TVI_SORT);
+	}
 	//GetMode(channel);
 }
 void CMainFrame::OnTopic(LPCTSTR channel, LPCTSTR topic)
@@ -1722,7 +1740,7 @@ void CMainFrame::OnTopic(LPCTSTR channel, LPCTSTR topic)
 
 	CNo5TreeItem parent = m_tv.FindItem(m_server, TRUE, FALSE);
 	if (!m_tv.FindItem(channel, FALSE, TRUE))
-		m_tv.InsertItem(channel,6,6, parent, TVI_SORT);
+		m_tv.InsertItem(channel,8,8, parent, TVI_SORT);
 	/*if (m_bNoColors)
 		p->AppendText(topic);
 	else*/
@@ -1752,8 +1770,16 @@ void CMainFrame::OnWhoSetTheTopic(LPCTSTR channel, LPCTSTR user, time_t time)
 void CMainFrame::OnNamesInChannel(LPCTSTR channel, const CSimpleArray<CString>& args)
 {
 	CView* p = CreateChannel(channel);
-	ActivateViewByName(channel);
+	//ActivateViewByName(channel);
 	CNo5TreeItem parent = m_tv.FindItem(channel, FALSE, TRUE);
+
+	if (!parent) {
+		parent = m_tv.FindItem(m_server, FALSE, FALSE);
+		if (parent) {
+			parent = m_tv.InsertItem(channel,8,8, parent, TVI_SORT);
+		}
+	}
+	ATLASSERT(!parent.IsNull());
 	
 	if (parent) {
 		CString name;
@@ -1793,7 +1819,8 @@ void CMainFrame::OnNamesInChannel(LPCTSTR channel, const CSimpleArray<CString>& 
 			if (iImage < 5) {
 				name = name.Right(name.GetLength() - 1);
 			}
-			CTreeItem item = m_tv.InsertItem(name,iImage,iImage, parent, TVI_SORT);
+			if(name.Compare(m_nick))
+				CTreeItem item = m_tv.InsertItem(name,iImage,iImage, parent, TVI_SORT);
 		}
 	}
 }
@@ -1810,8 +1837,9 @@ void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg)
 {
 	CString str = user; str += ':';
 
-	m_NameOrChannel = channel;
-	CView* p = CreateViewIfNoExist(channel,ViewType::VIEW_CHANNEL);
+	//m_NameOrChannel = channel;
+	//CView* p = CreateViewIfNoExist(channel,ViewType::VIEW_CHANNEL);
+	CView* p = GetViewByName(channel);
 	if (m_bDarkMode) {
 		p->SetBackgroundColor(0);
 		p->SetTextColor(0xffffff);
@@ -1833,15 +1861,15 @@ void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg)
 		p->ResetFormat();
 	}
 	p->SetSelEnd();
+	m_bottom.m_client.SetFocus();
 	if (!m_nick.CompareNoCase(user)) {
 		//p->AppendText(_T("\r\n"));
 	}
 }
-void CMainFrame::OnPrivateMsg(LPCTSTR channel, LPCTSTR from, LPCTSTR msg)
+void CMainFrame::OnPrivateMsg(LPCTSTR from, LPCTSTR msg)
 {
-	if (m_nick.CompareNoCase(from)) {
-		if (wcschr(msg, '\x1')) { // ctcp
-			CView* pView = GetActiveView();
+	if (wcschr(msg, '\x1')) { // ctcp
+			//CView* pView = GetActiveView();
 			CString tag = RemoveDelimiters2(msg);
 			tag = tag.Trim();
 			if (!tag.Compare(_T("VERSION"))) {
@@ -1856,27 +1884,32 @@ void CMainFrame::OnPrivateMsg(LPCTSTR channel, LPCTSTR from, LPCTSTR msg)
 			else if (!tag.Compare(_T("TIME"))) {
 				AnswerTimeRequest(from);
 			}
-		}
 	}
 	else {
-		CView *p = CreateViewIfNoExist(from, ViewType::VIEW_PVT);
-		p->SetTextColor(0x000088);
-		p->AppendText(from);
-		p->AppendText(_T(": "));
-		p->SetTextColor(0);
-		CString str = msg;
-		str += "\r\n";
-		if (m_bNoColors) {
-			p->AppendText(str);
-		}
-		else {
-			p->AppendTextIrc(str);
-			p->ResetFormat();
-		}
-		p->SetSelEnd();
-		if (!m_nick.CompareNoCase(from))
-			p->AppendText(_T("\r\n"));
+			CView* p;
+			if (!m_nick.Compare(from)) {
+				p = GetActiveView();
+				p->SetTextColor(0xff0000);
+			}
+			else {
+				p = CreateViewIfNoExist(from, ViewType::VIEW_PVT);
+				p->SetTextColor(0x000088);
+			}
+			p->AppendText(from);
+			p->AppendText(_T(": "));
+			p->SetTextColor(0);
+			CString str = msg;
+			//str += "\r\n";
+			if (m_bNoColors) {
+				p->AppendText(str);
+			}
+			else {
+				p->AppendTextIrc(str);
+				p->ResetFormat();
+			}
+			p->SetSelEnd();
 	}
+	
 }
 
 void CMainFrame::OnUserQuit(LPCTSTR channel, LPCTSTR user, LPCTSTR msg)
@@ -1892,12 +1925,12 @@ void CMainFrame::OnUserJoin(LPCTSTR channel, LPCTSTR user)
 	CView* p;
 	CString msg;
 
-	if (!m_nick.CompareNoCase(user)) {
+	/*if (!m_nick.CompareNoCase(user)) {
 		p = GetActiveView();
 	}
-	else {
+	else {*/
 		p = GetViewByName(channel);
-	}
+	//}
 
 	msg = user; msg += _T(" enters the channel ");
 	msg += channel;
@@ -1910,6 +1943,13 @@ void CMainFrame::OnUserJoin(LPCTSTR channel, LPCTSTR user)
 	if (true /*user != m_nick*/) {
 		CNo5TreeItem parent = m_tv.FindItem(channel, FALSE, TRUE);
 
+		if (!parent) {
+			parent = m_tv.FindItem(m_server, FALSE, FALSE);
+			if (parent) {
+				parent = m_tv.InsertItem(channel,8,8, parent, TVI_SORT);
+			}
+			ATLASSERT(!parent.IsNull());
+		}
 		if (parent) {
 			CString name = user;
 			int iImage;
@@ -1956,10 +1996,9 @@ void CMainFrame::OnUserPart(LPCTSTR channel, LPCTSTR user, LPCTSTR msg)
 	CView* p = GetActiveView();
 	CString txt = user;
 
-	txt += _T(" leaves the channel: "); txt += channel; txt += ' '; txt += msg;
+	txt += _T(" leaves the channel: "); txt += channel; txt += ' '; txt += msg; txt += '\n';
 	p->SetTextColor(0x108800);
 	p->AppendText(txt);
-	p->AppendText(_T("\n"));
 	m_marquee.AddItem(txt);
 	m_tv.DeleteItem(user, TRUE, TRUE);
 }
@@ -2174,7 +2213,7 @@ void CMainFrame::AnswerVersionRequest(LPCTSTR from)
 		vi.GetString(cp, _T("ProductName"), product);
 		vi.GetString(cp, _T("ProductVersion"), version);
 		tag.Format(_T("\001VERSION %s-%s-Windows by https://fioresoft.net\001"), (LPCTSTR)product, (LPCTSTR)version);
-		//SendNoticeMsg(from, tag);
+		SendNoticeMsg(from, tag);
 		pView->AppendText(_T("Sent CTCP VERSION reply -> ") + tag + '\n');
 	}
 }
