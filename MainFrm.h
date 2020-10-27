@@ -8,6 +8,13 @@
 #include "IIrc.h"
 #include "usermsgs.h"
 #include "View.h"
+#ifdef NO5_SSL
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "openssl/err.h"
+#endif
 
 class CMainFrame;
 
@@ -32,6 +39,7 @@ public:
 		COMMAND_ID_HANDLER(ID_FILE_OPEN, OnFileOpen)
 		COMMAND_ID_HANDLER(ID_FILE_UPDATE, OnFileUpdate)
 		FORWARD_NOTIFICATIONS()
+		//REFLECT_NOTIFICATIONS()
 		CHAIN_MSG_MAP(CUpdateUI<CChannelsViewFrame>)
 		CHAIN_MSG_MAP(CFrameWindowImpl< CChannelsViewFrame>)
 	END_MSG_MAP()
@@ -50,10 +58,27 @@ public:
 
 class CMySocket : public CSimpleSocket
 {
+#ifdef NO5_SSL
+	SSL_CTX* ctx;
+public:
+	SSL* ssl;
+#endif
 public:
 	CMySocket(ISocketEvents* pSink) :CSimpleSocket(pSink)
 	{
-
+#ifdef NO5_SSL
+		ctx = NULL;
+		ssl = NULL;
+#endif
+	}
+	virtual ~CMySocket()
+	{
+#ifdef NO5_SSL
+		if (ctx != NULL) {
+			SSL_CTX_free(ctx);
+			SSL_free(ssl);
+		}
+#endif
 	}
 	// IResolveEvents
 	virtual void OnResolvingAddress(CAsyncResolve* pObj)
@@ -67,6 +92,104 @@ public:
 		CSimpleSocket::OnAddressResolved(pObj, error, buflen);
 		//m_top.AppendText(_T("Address resolved\r\n"));
 	}
+#ifdef NO5_SSL
+	void OutputSSLError(int res)
+	{
+		res = SSL_get_error(ssl, res);
+		switch (res) {
+		case SSL_ERROR_NONE:
+			ATLTRACE(_T("SSL_ERROR_NONE\n"));
+			break;
+		case SSL_ERROR_ZERO_RETURN:
+			ATLTRACE(_T("SSL_ERROR_ZERO_RETURN\n"));
+			break;
+		case SSL_ERROR_WANT_READ:
+			ATLTRACE(_T("SSL_ERROR_WANT_READ\n"));
+			//_OnRead(0);
+			break;
+		case SSL_ERROR_WANT_WRITE:
+			ATLTRACE(_T("SSL_ERROR_WANT_WRITE\n"));
+			//_OnWrite(0);
+			break;
+		default:
+			char buf[256] = { 0 };
+			ERR_error_string_n(ERR_get_error(), buf, sizeof(buf) - 1);
+			CString s = buf;
+			ATLTRACE(_T("Error %s\n"), s);
+			break;
+		}
+	}
+	BOOL InitSSL()
+	{
+		int res;
+		res = SSL_library_init();
+		ATLASSERT(res == 1);
+		res = SSL_load_error_strings();
+		ATLASSERT(res == 1);
+		const SSL_METHOD* m = TLS_client_method();
+		ctx = SSL_CTX_new(m);
+		ATLASSERT(ctx != NULL);
+		res = SSL_CTX_use_certificate_file(ctx, "freenode.pem", SSL_FILETYPE_PEM);
+		if (res != 1) {
+			OutputSSLError(res);
+		}
+		res = SSL_CTX_use_PrivateKey_file(ctx, "fd.key", SSL_FILETYPE_PEM);
+		if (res != 1) {
+			OutputSSLError(res);
+		}
+		res = SSL_CTX_load_verify_locations(ctx, "freenode.pem", NULL);
+		ATLASSERT(res == 1);
+		SSL_CTX_set_verify_depth(ctx, 1);
+		ssl = SSL_new(ctx);
+		if (SSL_get_verify_result(ssl) == X509_V_OK) {
+			//SSL_set_options(ssl, SSL_MODE_ASYNC);
+			return TRUE;
+		}
+		else
+			return FALSE;
+	}
+	virtual int RecvSSL(char* buf, int len, int flags = 0)
+	{
+		//size_t read = 0;
+		m_canread = false;
+		int res = SSL_read(ssl, buf, len);
+		//ATLASSERT(res >= 0);
+		if (res < 0) {
+			OutputSSLError(res);
+		}
+		return res;
+	}
+	virtual int SendSSL(char* buf, int len, int flags = 0)
+	{
+		int res;
+		//size_t written = 0;
+
+		m_canwrite = false;
+		res = SSL_write(ssl, buf, len);
+		if (res != SOCKET_ERROR) {
+			// send will only send more notifications when send
+			// fails with error WSAEWOULDBLOCK, so we set the flag
+			// here
+			m_canwrite = true;
+		}
+		else if (WSAEWOULDBLOCK != GetLastError()) {
+			m_canwrite = true;
+			// since we do not always check the return value for this
+			// error code ...
+			//ATLASSERT(0);
+			_OnError(GetLastError());
+		}
+		else {
+			// an FD_WRITE event will be sent when we can write again,
+			// for now, we cant
+		}
+		return res;
+	}
+	virtual int SendStringSSL(const char* buf)
+	{
+		return SendSSL(const_cast<char*>(buf), strlen(buf));
+	}
+#endif
 };
 
 class CMainFrame;
@@ -90,6 +213,7 @@ public:
 		NOTIFY_HANDLER(IDC_TREEVIEW, NM_RCLICK, OnTVRightClick)
 		NOTIFY_HANDLER(IDC_TREEVIEW, TVN_GETINFOTIP,OnTVGetInfoTip)
 		//FORWARD_NOTIFICATIONS()
+		//REFLECT_NOTIFICATIONS()
 		CHAIN_MSG_MAP(_baseClass)
 	END_MSG_MAP()
 
@@ -197,8 +321,6 @@ private:
 	CBottom m_bottom;
 	CMyTabbedChildWindow m_tab;
 	CSplitterWindow m_vsplitter;
-	//CListBox m_lb;
-	//CListBox m_lb2;
 	CFont m_font;
 	CNo5TreeCtrl m_tv;
 	CListViewCtrl m_lv;
@@ -222,6 +344,8 @@ private:
 	BOOL m_bAllowCTCP; // answer CTCP queries?
 	CString m_userinfo;
 	MarqueeOptions mo;
+	bool m_bssl;
+	
 	//
 	void CreateTreeView();
 	void CreateListView();
@@ -233,6 +357,7 @@ private:
 	void OnLogin();
 	bool ParseUserName(const CString& user, CString& nick, CString& name, CString& ip);
 	void CreateView(LPCTSTR name = NULL, ViewType type = VIEW_NONE);
+	CString GetTimeString() const;
 public:
 	bool m_bDarkMode;
 	//
@@ -255,14 +380,20 @@ public:
 		m_servers.Add(_T("irc.brasirc.org"));
 		m_servers.Add(_T("irc.efnet.org"));
 		m_servers.Add(_T("irc.dal.net"));
+		m_servers.Add(_T("localhost"));
 		//
 		m_server = _T("irc.freenode.net");
 		m_NameOrChannel = m_server;
 		m_bNoColors = false;
 		m_bAllowCTCP = FALSE;
 		m_bDarkMode = false;
+		m_bssl = false;
 		//
 		//m_CmdBar.m_hIconChildMaximized = LoadIcon(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
+	}
+	~CMainFrame()
+	{
+		
 	}
 public:
 
@@ -287,6 +418,7 @@ public:
 		MESSAGE_HANDLER(WM_CHANNELSFILEUPDATE, OnChannelsFileUpdate)
 		MESSAGE_HANDLER(WM_ONFONTCHANGE,OnFontChange)
 		MESSAGE_HANDLER(WM_ONFONTSIZECHANGE, OnFontSizeChange)
+		MESSAGE_HANDLER(WM_FINDUSER,OnFindUser)
 		COMMAND_ID_HANDLER(ID_APP_EXIT, OnFileExit)
 		COMMAND_ID_HANDLER(ID_FILE_NEW, OnFileNew)
 		COMMAND_ID_HANDLER(ID_FILE_SAVE,OnFileSave)
@@ -327,6 +459,7 @@ public:
 	LRESULT OnChannelsFileUpdate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnFontChange(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnFontSizeChange(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
+	LRESULT OnFindUser(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFilePrint(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
@@ -386,8 +519,9 @@ public:
 	virtual void OnUserQuit(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);
 	virtual void OnUserJoin(LPCTSTR channel, LPCTSTR user);
 	virtual void OnUserPart(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);
-	virtual void OnNotice(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);
+	virtual void OnNotice(LPCTSTR user, LPCTSTR msg);
 	virtual void OnPing(LPCTSTR code);
+	virtual void OnAction(LPCTSTR channel,LPCTSTR from, LPCTSTR msg);
 	virtual void OnUnknownCmd(LPCTSTR line);
 	//
 	virtual void SendChannelMsg(LPCTSTR channel, LPCTSTR msg);
@@ -408,6 +542,7 @@ public:
 	virtual void RequestUserinfo(LPCTSTR from);
 	virtual void RequestPing(LPCTSTR from);
 	virtual void RequestTime(LPCTSTR from);
+	virtual void SendAction(LPCTSTR channel,LPCTSTR msg);
 	virtual void AnswerVersionRequest(LPCTSTR from);
 	virtual void AnswerUserinfoRequest(LPCTSTR from);
 	virtual void AnswerPingRequest(LPCTSTR from);

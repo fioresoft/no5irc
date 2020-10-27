@@ -15,7 +15,7 @@
 #ifdef _DEBUG
 #define PRODUCT_NAME	_T("irc11.exe")
 #else
-#define PRODUCT_NAME	_T("irc11.exe")
+#define PRODUCT_NAME	_T("no5irc.exe")
 #endif
 
 #define CHAIN_COMMANDS_MEMBER_ID_RANGE(theChainMember, idFirst, idLast) \
@@ -44,6 +44,8 @@ extern CAppModule _Module;
 #include <atlctrlx.h>
 #include <atlddx.h>
 #include <winsock2.h>
+#include <mstcpip.h>
+#include <ws2tcpip.h>
 //#include <atlsplit.h> with this doesn't work
 #include "../NO5TL/atlsplit2.h"
 #include <include/atlgdix.h>
@@ -62,6 +64,7 @@ extern CAppModule _Module;
 //#include "..\NO5TL\MarqueeMM.h"
 #include "..\NO5TL\MarqueeWnd.h"
 #include "..\NO5TL\VersionInfo.h"
+#include "..\NO5TL\Color.h"
 #include "viksoe/FontCombo.h"
 #include "viksoe/ColorCombo.h"
 using namespace NO5TL;

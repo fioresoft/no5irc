@@ -67,35 +67,35 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\Fernando\source\repos\NO5TL sock clients\irc11;$(WTL);$(IncludePath)</IncludePath>
+    <IncludePath>C:\Program Files (x86)\OpenSSL-Win32\include\;C:\Users\Fernando\source\repos\NO5TL sock clients\irc11;$(WTL);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\Fernando\source\repos\NO5TL sock clients\irc11;$(WTL);$(IncludePath)</IncludePath>
+    <IncludePath>C:\Program Files (x86)\OpenSSL-Win32\include\;C:\Users\Fernando\source\repos\NO5TL sock clients\irc11;$(WTL);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Users\Fernando\source\repos\NO5TL sock clients\irc11;$(WTL);$(IncludePath)</IncludePath>
+    <IncludePath>C:\Program Files (x86)\OpenSSL-Win32\include\;C:\Users\Fernando\source\repos\NO5TL sock clients\irc11;$(WTL);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Users\Fernando\source\repos\NO5TL sock clients\irc11;$(WTL);$(IncludePath)</IncludePath>
+    <IncludePath>C:\Program Files (x86)\OpenSSL-Win32\include\;C:\Users\Fernando\source\repos\NO5TL sock clients\irc11;$(WTL);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;STRICT;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/D_WTL_NO_CSTRING %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D_WTL_NO_CSTRING /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ws2_32.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;Version.lib;C:\Program Files (x86)\OpenSSL-Win32\lib\VC\static\libcrypto32mdd.lib;C:\Program Files (x86)\OpenSSL-Win32\lib\VC\static\libssl32mdd.lib;Crypt32.lib;ucrtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>
@@ -118,17 +118,17 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_WINDOWS;STRICT;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/D_WTL_NO_CSTRING %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D_WTL_NO_CSTRING /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ws2_32.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;Version.lib;C:\Program Files (x86)\OpenSSL-Win32\lib\VC\static\libcrypto32mdd.lib;C:\Program Files (x86)\OpenSSL-Win32\lib\VC\static\libssl32mdd.lib;Crypt32.lib;ucrtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>
@@ -244,13 +244,13 @@
     <Image Include="res\10.ico" />
     <Image Include="res\16.ico" />
     <Image Include="res\17.ico" />
-    <Image Include="res\19.gif" />
     <Image Include="res\19.ico" />
     <Image Include="res\21.ico" />
     <Image Include="res\23.ico" />
     <Image Include="res\4.ico" />
     <Image Include="res\bold.ico" />
     <Image Include="res\channels.bmp" />
+    <Image Include="res\connect.ico" />
     <Image Include="res\icon1.ico" />
     <Image Include="res\icon2.ico" />
     <Image Include="res\icon9.ico" />

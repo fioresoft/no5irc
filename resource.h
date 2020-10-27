@@ -31,6 +31,8 @@
 #define IDB_BITMAP4                     228
 #define ID_EDIT_ITALIC                  231
 #define ID_EDIT_UNDERLINE               232
+#define IDC_FORE                        233
+#define IDC_BACK                        234
 #define IDC_LIST1                       1000
 #define IDC_EDIT1                       1001
 #define IDC_EDIT2                       1002
@@ -47,8 +49,10 @@
 #define IDC_STATIC2                     1014
 #define IDC_EDIT6                       1015
 #define IDC_COMBO_FONTS                 1016
-#define IDC_COMBO_FORE					1017
-#define IDC_COMBO_BACK					1018
+#define IDC_COMBO_FORE                  1017
+#define IDC_COMBO_BACK                  1018
+#define IDC_COMBO_SIZE                  1019
+#define IDC_TT_FORE						1020
 #define ID_EDIT_DECFONT                 32776
 #define ID_EDIT_INCFONT                 32777
 #define ID_USER_SENDVERSIONREQUEST      32778
@@ -77,14 +81,16 @@
 #define ID_BUTTON32805                  32805
 #define ID_BUTTON32806                  32806
 #define ID_BUTTON32807                  32807
+#define ID_BUTTON32808                  32808
+#define ID_BUTTON32809                  32809
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        233
-#define _APS_NEXT_COMMAND_VALUE         32808
-#define _APS_NEXT_CONTROL_VALUE         1019
+#define _APS_NEXT_COMMAND_VALUE         32810
+#define _APS_NEXT_CONTROL_VALUE         1020
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

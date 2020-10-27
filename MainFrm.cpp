@@ -13,6 +13,7 @@
 #include "COptionsDlg.h"
 #define IDC_BAND_MARQUEE	100
 
+
 static BOOL CALLBACK EnumChildGetDataByName(HWND hWnd, LPARAM lParam);
 static BOOL CALLBACK EnumChildActivate(HWND hWnd, LPARAM lParam);
 static int CALLBACK CompareLVItems(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
@@ -60,6 +61,7 @@ BOOL CMainFrame::OnIdle()
 
 LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
+	CRect rcClient;
 	// create command bar window
 	HWND hWndCmdBar = m_CmdBar.Create(m_hWnd, rcDefault, NULL, ATL_SIMPLE_CMDBAR_PANE_STYLE);
 	// attach menu
@@ -86,7 +88,7 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 		TRUE,	// new row
 		0,		// cx
 		TRUE);	// full width always
-	m_marquee.AddItem(_T("Welcome to NO5 IRC"));
+	//m_marquee.AddItem(_T("Welcome to NO5 IRC"));
 
 	CreateSimpleStatusBar();
 
@@ -99,13 +101,13 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	UISetCheck(ID_VIEW_MARQUEE, 1);
 	UISetCheck(ID_VIEW_DARKMODE, m_bDarkMode?1:0,TRUE);
 
-	m_splitter.Create(m_hWnd, 0, 0, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, WS_EX_CLIENTEDGE);
-	m_vsplitter.Create(m_splitter, 0, 0, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, WS_EX_CLIENTEDGE);
+	m_splitter.Create(m_hWnd, 0, 0, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, 0);
+	m_vsplitter.Create(m_splitter, 0, 0, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, 0);
 	m_hWndClient = m_splitter;
 	//m_hWndClient = NULL;
 	// left pane
 	//m_tab.ModifyTabStyles(0, CTCS_CLOSEBUTTON); // tem que ser antes do Create
-	m_tab.Create(m_vsplitter, 0, 0, WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, WS_EX_CLIENTEDGE);
+	m_tab.Create(m_vsplitter, 0, 0, WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0);
 
 	// botttom
 	m_bottom.Create(m_splitter,rcDefault,(LPCTSTR)0,WS_CHILD|WS_VISIBLE|WS_CLIPCHILDREN);
@@ -122,9 +124,10 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	//
 	m_splitter.SetSplitterPanes(m_vsplitter, m_bottom);
 	m_vsplitter.SetSplitterPanes(m_tab, m_hWndMDIClient);
-	m_splitter.SetSplitterPosPct(80);
 	m_vsplitter.SetSplitterPosPct(40);
 	UpdateLayout(TRUE);
+	GetClientRect(&rcClient);
+	m_splitter.SetSplitterPos(rcClient.Height() - m_bottom.GetDesiredHeight());
 
 	//SetTabOwnerParent(m_hWnd);
 
@@ -169,14 +172,11 @@ LRESULT CMainFrame::OnChildDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lP
 	ViewData* p = GetViewData();
 	if (p->type == VIEW_CHANNEL) {
 		if (m_sock.IsConnected()) {
-			if (/*m_bInChannel &&*/ m_NameOrChannel[0] == '#') {
-				CString cmd = _T("PART ");
-				cmd += m_NameOrChannel;
-				cmd += _T("\r\n");
-				m_sock.Send(CT2A(cmd), cmd.GetLength());
+			if (m_bInChannel && p->name[0] == '#') {
+				LeaveChannel(p->name, _T("N05 IRC for Windows at https://fioresoft.net"));
 
 				// deletes the channel tree node
-				m_tv.DeleteItem(m_NameOrChannel, TRUE, TRUE);
+				m_tv.DeleteItem(p->name, TRUE, TRUE);
 			}
 		}
 	}
@@ -326,6 +326,10 @@ LRESULT CMainFrame::OnFontChange(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam
 		LPCTSTR font = LPCTSTR(lParam);
 		p->SetTextFontName(font, SCF_ALL);
 	}
+	CRect rc;
+	GetClientRect(&rc);
+	UpdateLayout(TRUE);
+	m_splitter.SetSplitterPos(rc.Height() - m_bottom.GetDesiredHeight());
 	return 0;
 }
 
@@ -337,7 +341,52 @@ LRESULT CMainFrame::OnFontSizeChange(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lP
 		int size = int(lParam);
 		p->SetTextHeight(size, SCF_ALL);
 	}
+	CRect rc;
+	GetClientRect(&rc);
+	UpdateLayout(TRUE);
+	m_splitter.SetSplitterPos(rc.Height() - m_bottom.GetDesiredHeight());
 	return 0;
+}
+
+struct EnumNameData
+{
+	LPCTSTR partial;
+	CStringArray* pres;
+};
+
+BOOL EnumFindName(CNo5TreeItem& item, LPARAM lParam)
+{
+	CString name;
+	EnumNameData* p = (EnumNameData*)lParam;
+
+	item.GetText(name);
+	LPCTSTR found = ::StrStrI(name, p->partial);
+
+	if (found != NULL && found == (LPCTSTR)name) {
+		p->pres->Add(name);
+	}
+	return FALSE;
+}
+
+LRESULT CMainFrame::OnFindUser(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
+{
+	ViewData* p = GetViewData();
+	LRESULT res = 0;
+
+	if (p && p->type == ViewType::VIEW_CHANNEL) {
+		CNo5TreeItem item = m_tv.FindItem(p->name, FALSE, TRUE);
+		if (!item.IsNull()) {
+			EnumNameData nd;
+			nd.partial = (LPCTSTR)wParam;
+			nd.pres = (CStringArray*)lParam;
+			item = item.GetChild();
+			if (!item.IsNull()) {
+				item.EnumSiblings(&EnumFindName, (LPARAM)&nd, TRUE, TRUE);
+				res = nd.pres->GetSize();
+			}
+		}
+	}
+	return res;
 }
 
 LRESULT CMainFrame::OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
@@ -349,7 +398,7 @@ LRESULT CMainFrame::OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
 LRESULT CMainFrame::OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	OnLogin();
-	CreateView(m_server, VIEW_SERVER);
+	CreateViewIfNoExist(m_server, VIEW_SERVER);
 
 	return 0;
 }
@@ -594,8 +643,6 @@ LRESULT CMainFrame::OnTVDoubleClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled
 			parent = parent.GetParent();
 			if (parent) {
 				item.GetText(name);
-				m_bInChannel = false;
-				m_NameOrChannel = name;
 				_name = name;
 				CView* pView = CreatePrivateChannel(_name);
 			}
@@ -702,6 +749,7 @@ void CMainFrame::CreateView(LPCTSTR name, ViewType type)
 	pChild->SetTitle(name, true);
 	pChild->m_view.SetAutoURLDetect();
 	pChild->m_view.SetEventMask(ENM_LINK);
+	pChild->m_view.SetIndent(150);
 	if (m_bDarkMode) {
 		pChild->m_view.SetTextBkColor(0, SCF_ALL);
 		pChild->m_view.SetTextColor(0xffffff, SCF_ALL);
@@ -745,7 +793,7 @@ void CMainFrame::CreateTreeView()
 
 void CMainFrame::CreateListView()
 {
-	m_ChannelsView.CreateEx(m_tab, rcDefault, WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, WS_EX_CLIENTEDGE);
+	m_ChannelsView.CreateEx(m_tab, rcDefault, WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 0);
 	m_lv.Create(m_ChannelsView, 0, 0, LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | LVS_SHOWSELALWAYS| WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
 		0,IDC_LISTVIEW);
 	LVCOLUMN col = { 0 };
@@ -885,7 +933,7 @@ LRESULT CMainFrame::OnMsgFromBottom(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lPara
 				else if (!msg.Compare(_T("QUIT"))) {
 					msg.Append(_T(" :NO5 IRC https://fioresoft.net"));
 				}
-				else if (!msg.Compare(_T("PART")))	  {
+				else if (!msg.Compare(_T("PART"))) {
 					msg.Append(_T(" :NO5 IRC https://fioresoft.net"));
 				}
 				msg.Append(_T("\r\n"));
@@ -893,6 +941,7 @@ LRESULT CMainFrame::OnMsgFromBottom(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lPara
 				CString s;
 				for (int i = 2; i < arr.GetSize(); i++) {
 					s += arr[i];
+					s += ' ';
 				}
 				if (count >= 2 && (!arr[0].CompareNoCase(_T("/PRIVMSG"))) && (!arr[1].IsEmpty())) {
 					if (arr[1].GetAt(0) != '#') {
@@ -906,19 +955,30 @@ LRESULT CMainFrame::OnMsgFromBottom(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lPara
 					}
 				}
 			}
-			else if (!m_bInChannel) {
+			else if (msg[0] == ':') {
 				ViewData* p = GetViewData();
-				//CView* pView = CreatePrivateChannel(p->name);
-				
-				SendPrivateMsg(p->name, msg);
-				OnPrivateMsg(m_nick, msg);
+				msg = msg.Right(msg.GetLength() - 1);
+
+				msg.TrimRight();
+				SendAction(p->name, msg);
 			}
-			else if (m_bInChannel) {
+			else {
 				ViewData* p = GetViewData();
-				ATLASSERT(p->type == ViewType::VIEW_CHANNEL);
-				//CView* pView = CreateChannel(m_NameOrChannel);
-				SendChannelMsg(p->name, msg);
-				OnChannelMsg(p->name, m_nick, msg);
+				m_bInChannel = p->type == ViewType::VIEW_CHANNEL; // TODO: hack because something was changing m_bInChannel to true. Find it!
+				if (!m_bInChannel) {
+					//ViewData* p = GetViewData();
+					//CView* pView = CreatePrivateChannel(p->name);
+
+					SendPrivateMsg(p->name, msg);
+					OnPrivateMsg(m_nick, msg);
+				}
+				else if (m_bInChannel) {
+					ViewData* p = GetViewData();
+					ATLASSERT(p->type == ViewType::VIEW_CHANNEL);
+					//CView* pView = CreateChannel(m_NameOrChannel);
+					SendChannelMsg(p->name, msg);
+					OnChannelMsg(p->name, m_nick, msg);
+				}
 			}
 		}
 	}
@@ -1006,6 +1066,8 @@ CView* CMainFrame::CreatePrivateChannel(LPCTSTR name)
 {
 	CView* p = CreateViewIfNoExist(name, VIEW_PVT);
 	ATLASSERT(p);
+	m_bInChannel = false;
+	m_NameOrChannel = name;
 	// TODO: do a whois on the person
 	ActivateViewByName(name);
 	return p;
@@ -1146,7 +1208,8 @@ void CMainFrame::OnLogin()
 	int nRes = dlg.DoModal();
 	if (nRes == IDOK) {
 		USES_CONVERSION;
-		m_lv.DeleteAllItems();
+		if(m_server != dlg.m_server)
+			m_lv.DeleteAllItems();
 		m_tv.DeleteAllItems();
 		m_servers = dlg.m_servers;
 		m_server = dlg.m_server;
@@ -1158,10 +1221,46 @@ void CMainFrame::OnLogin()
 		m_port = dlg.m_port;
 		BOOL res = m_sock.CreateSocket();
 		if (res) {
-			res = m_sock.Connect(CT2CA(m_server), m_port.Get(true));
-			//res = m_sock.Connect(CT2CA(m_server), 7000);
+			//res = m_sock.SetOption(SO_SNDBUF, 0);
+			ATLASSERT(res);
+			//res = m_sock.SetOption(SO_RCVBUF, 0);
+			ATLASSERT(res);
+			//res = m_sock.AsyncSelect(FD_READ | FD_WRITE | FD_CLOSE);
 			if (res) {
-				res = m_sock.AsyncSelect();
+#ifdef NO5_SSL
+				if (m_port.Get(true) != 6667) {
+					m_bssl = true;
+				}
+				if (m_bssl) {
+					res = m_sock.InitSSL();
+				}
+				if (res) {
+					CSocketAddress saddr;
+
+					if (m_bssl) {
+						res = saddr.Set(CT2CA(m_server), m_port);
+						if (res) {
+							res = m_sock.Connect(&saddr);
+							if (res) {
+								int res = SSL_set_fd(m_sock.ssl, m_sock.GetHandle());
+								ATLASSERT(res == 1);
+								res = SSL_connect(m_sock.ssl);
+								if (res < 0) {
+									m_sock.OutputSSLError(res);
+								}
+								m_sock.AsyncSelect(FD_READ | FD_WRITE | FD_CLOSE);
+							}
+						}
+					}
+					else {
+#endif
+						res = m_sock.Connect(CT2CA(m_server), m_port.Get(true));
+						if(res)
+							res = m_sock.AsyncSelect(FD_READ | FD_WRITE |FD_CONNECT| FD_CLOSE);
+#ifdef NO5_SSL
+					}
+				}
+#endif
 			}
 			if (!res) {
 				OnSockError(::WSAGetLastError());
@@ -1281,6 +1380,7 @@ void CMainFrame::CreateMarquee(void)
 	}
 	m_marquee.SetElapse(mo.Elapse);
 	m_marquee.Start();
+	m_marquee.AddItem(_T("Welcome to NO5 IRC"));
 }
 
 void CMainFrame::OnSockError(int error)
@@ -1295,11 +1395,12 @@ void CMainFrame::OnSockError(int error)
 }
 void CMainFrame::OnSockRead(int error)
 {
-	static CDataBuffer<char> buffer(4096);
-	static char buf[4096] = { 0 };
+	const int buflen = 16384 * 2;// 4096 * 2; // = 16384 * 2 whats better? big or small?
+	static CDataBuffer<char> buffer(buflen);
+	static char buf[buflen] = { 0 };
 	CSimpleArray<CString> lines;
 	CView* pView = GetActiveView();
-	DWORD res = 0;
+	int res = 0;
 	WSABUF wsbuf = { 0 };
 	DWORD dwFlags = 0;
 	wsbuf.buf = buf;
@@ -1316,17 +1417,27 @@ void CMainFrame::OnSockRead(int error)
 	if (error)
 		return;
 	memset(buf, 0, sizeof(buf));
-	if (m_sock.CanRead()) {
+	//if (m_sock.CanRead()) {
 		//res = m_sock.Recv(buf, sizeof(buf) - 1);
-		if (::WSARecv(m_sock.GetHandle(), &wsbuf, 1, &res, &dwFlags, NULL, NULL)) {
+	if (!m_bssl) {
+		if (::WSARecv(m_sock.GetHandle(), &wsbuf, 1, (DWORD *)&res, &dwFlags, NULL, NULL)) {
 			OnSockError(WSAGetLastError());
 			return;
 		}
 	}
+#ifdef NO5_SSL
+	else {
+		res = m_sock.RecvSSL(buf, sizeof(buf));
+		//ATLASSERT(res >= 0);
+		if (res < 0)
+			return;
+	}
+#endif
+	/*}
 	else {
 		Sleep(100);
 		return;
-	}
+	}*/
 	/*if (res == SOCKET_ERROR) {
 		OnSockError(res);
 		return;
@@ -1352,8 +1463,8 @@ void CMainFrame::OnSockRead(int error)
 	//int voids = buffer.ReplaceChars(0, '.');
 	//buffer.AddNull();
 	//ATLTRACE("\n nulls = %d\n", voids);
-	buffer.Init(("\r\n"), false);
-	const int count = buffer.GetAll2(lines);
+	buffer.Init("\r\n", true);
+	const int count = buffer.GetAll3(lines);
 	buffer.Reset();
 
 	for (int i = 0; i < count; i++) {
@@ -1365,7 +1476,7 @@ void CMainFrame::OnSockRead(int error)
 		st2.Init(lines[i],_T(" "));
 		str = lines[i];
 
-		const int count2 = st2.GetAll3(params);
+		const int count2 = st2.GetAll2(params);
 		if (count2 >= 2) {
 			server = params[0];
 			code = params[1];
@@ -1424,9 +1535,10 @@ void CMainFrame::OnSockRead(int error)
 				OnMOTD(m_NameOrChannel, msg);
 			}
 			else if (!code.Compare(_T("353"))) { // names in channel
-				if (count2 >= 5 && params[4].GetAt(0) == '#')
+				if (count2 >= 5 && params[4].GetAt(0) == '#') {
 					m_NameOrChannel = params[4];
-				OnNamesInChannel(params[4], params);
+					OnNamesInChannel(params[4], params);
+				}
 			}
 			else if (!code.Compare(_T("366"))) {
 				OnNamesEnd(params[3]);
@@ -1463,7 +1575,7 @@ void CMainFrame::OnSockRead(int error)
 					channel = params[2];
 					if (channel[0] == '#') {
 						m_bInChannel = true;
-						//m_NameOrChannel = channel;
+						m_NameOrChannel = channel;
 					}
 					else {
 						m_bInChannel = false;
@@ -1517,18 +1629,18 @@ void CMainFrame::OnSockRead(int error)
 				bool b = ParseUserName(str, nick, user, ip);
 				//ATLASSERT(b);
 
-				if (params[1]) {
-					for (int i = 1; i < count2; i++) {
+				if (params[2]) {
+					for (int i = 2; i < count2; i++) {
 						str += params[i];
 						str += ' ';
 					}
-					str += _T("\n");
+					//str += _T("\n");
 				}
 				OnUserPart(params[2], nick, str);
 
 			}
 			else if (!code.CompareNoCase(_T("NOTICE"))) {
-				OnNotice(NULL, NULL, lines[i]);
+				OnNotice(NULL, lines[i]);
 				pView->AppendText(_T("\n"));
 			}
 			else if (_wtoi(code)) {
@@ -1561,13 +1673,54 @@ void CMainFrame::OnSockRead(int error)
 		buffer.Reset();
 	}
 }
-void CMainFrame::OnSockWrite(int error) {}
+
+void CMainFrame::OnSockWrite(int error)
+{
+#ifdef NO5_SSL
+	if (m_bssl) {
+		static bool sendlogin = true;
+
+		if (sendlogin) {
+			sendlogin = false;
+			if (!m_pass.IsEmpty()) {
+				//while (!m_sock.CanWrite());
+				SendPass(m_pass);
+			}
+			SendNick(m_nick);
+			//while (!m_sock.CanWrite());
+			//ATLASSERT(m_sock.CanWrite());
+			SendUser(m_user, m_name);
+
+			//m_sock.SendString("USER phpnewbie 0 * :fernando\r\n");
+			if (m_JoinChannel.IsEmpty()) {
+				//::Sleep(1000);
+				//ListChannels();
+			}
+			else {
+				//while (!m_sock.CanWrite());
+				//ATLASSERT(m_sock.CanWrite());
+				JoinChannel(m_JoinChannel);
+				//GetTopic(m_JoinChannel);
+			}
+		}
+	}
+#endif
+}
+
 void CMainFrame::OnSockConnect(int error)
 {
-	CStringA cmd;
+	//ATLASSERT(0);
+	//CStringA cmd;
 	CView* pView = GetActiveView();
 	static bool reconnecitng = false;
 
+	if (m_bssl) {
+		ATLASSERT(0);
+	}
+
+	if (!pView) {
+		pView = CreateViewIfNoExist(m_server, ViewType::VIEW_SERVER);
+	}
 	ATLASSERT(pView);
 	if (error == SOCKET_ERROR && !reconnecitng) {
 		BOOL res;
@@ -1594,11 +1747,18 @@ void CMainFrame::OnSockConnect(int error)
 	}
 	pView->AppendText(_T("connected!\n"));
 
-	//if (m_sock.CanWrite()) {
+	ATLASSERT(m_sock.IsConnected());
+	
+	//ATLASSERT(res == 1);
 	if (!m_pass.IsEmpty()) {
+		//while (!m_sock.CanWrite());
 		SendPass(m_pass);
 	}
+	//while (!m_sock.CanWrite());
+	//ATLASSERT(m_sock.CanWrite());
 	SendNick(m_nick);
+	//while (!m_sock.CanWrite());
+	//ATLASSERT(m_sock.CanWrite());
 	SendUser(m_user, m_name);
 
 	//m_sock.SendString("USER phpnewbie 0 * :fernando\r\n");
@@ -1607,21 +1767,30 @@ void CMainFrame::OnSockConnect(int error)
 		//ListChannels();
 	}
 	else {
+		//while (!m_sock.CanWrite());
+		//ATLASSERT(m_sock.CanWrite());
 		JoinChannel(m_JoinChannel);
 		//GetTopic(m_JoinChannel);
 	}
+	
 }
 void CMainFrame::OnSockClose(int error)
 {
 	CView* pView = GetActiveView();
 	if (pView && pView->IsWindow())
 		pView->AppendText(_T("connection closed!\n"));
+	//OnSockError(error);
 }
 void CMainFrame::OnSockAccept(int error) {}
 void CMainFrame::OnSockOutOfBand(int error) {}
 void CMainFrame::OnSockConnecting(void)
 {
 	CView* pView = GetActiveView();
+
+	if (!pView) {
+		pView = CreateViewIfNoExist(m_server, ViewType::VIEW_SERVER);
+	}
+	ATLASSERT(pView);
 	pView->AppendText(_T("connecting..."));
 }
 void CMainFrame::OnSockConnectTimeout(void) {}
@@ -1727,7 +1896,12 @@ void CMainFrame::OnEndMOTD(LPCTSTR channel)
 void CMainFrame::OnNoTopic(LPCTSTR channel)
 {
 	CView* p = CreateViewIfNoExist(channel,ViewType::VIEW_CHANNEL);
+	CString t = GetTimeString();
 
+	p->SetTextColor(Colors::GREY);
+	p->AppendText(t);
+	p->SetTextColor(Colors::MARRON);
+	p->AppendText(_T("This channel has no topic"));
 	CNo5TreeItem parent = m_tv.FindItem(m_server, TRUE, FALSE);
 	if (!m_tv.FindItem(channel, FALSE, TRUE)) {
 		m_tv.InsertItem(channel,8,8,parent, TVI_SORT);
@@ -1737,6 +1911,7 @@ void CMainFrame::OnNoTopic(LPCTSTR channel)
 void CMainFrame::OnTopic(LPCTSTR channel, LPCTSTR topic)
 {
 	CView* p = CreateViewIfNoExist(channel, ViewType::VIEW_CHANNEL);
+	CString t = GetTimeString();
 
 	CNo5TreeItem parent = m_tv.FindItem(m_server, TRUE, FALSE);
 	if (!m_tv.FindItem(channel, FALSE, TRUE))
@@ -1744,7 +1919,10 @@ void CMainFrame::OnTopic(LPCTSTR channel, LPCTSTR topic)
 	/*if (m_bNoColors)
 		p->AppendText(topic);
 	else*/
-		p->AppendTextIrc(topic);
+	p->SetTextColor(Colors::GREY);
+	p->AppendText(t);
+	p->SetTextColor(Colors::MARRON);
+	p->AppendTextIrc(topic);
 	p->AppendText(_T("\n"));
 	p->ResetFormat();
 	//GetMode(channel);
@@ -1835,11 +2013,25 @@ void CMainFrame::OnNamesEnd(LPCTSTR channel)
 
 void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg)
 {
-	CString str = user; str += ':';
+	CString t = GetTimeString();
+	CString str = user; str += _T(": ");
 
+	if (wcschr(msg, '\x1')) { // ctcp
+		CString tag = RemoveDelimiters2(msg);
+		tag = tag.Trim();
+		if (!tag.Find(_T("ACTION")))
+		{
+			int index = tag.Find(' ');
+			tag = tag.Right(tag.GetLength() - index - 1);
+			OnAction(channel,user, tag);
+			return;
+		}
+	}
 	//m_NameOrChannel = channel;
 	//CView* p = CreateViewIfNoExist(channel,ViewType::VIEW_CHANNEL);
 	CView* p = GetViewByName(channel);
+	p->SetTextColor(Colors::GREY);
+	p->AppendText(t);
 	if (m_bDarkMode) {
 		p->SetBackgroundColor(0);
 		p->SetTextColor(0xffffff);
@@ -1860,6 +2052,7 @@ void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg)
 		p->AppendTextIrc(str);
 		p->ResetFormat();
 	}
+	//p->AppendText(_T("\n"));
 	p->SetSelEnd();
 	m_bottom.m_client.SetFocus();
 	if (!m_nick.CompareNoCase(user)) {
@@ -1887,12 +2080,17 @@ void CMainFrame::OnPrivateMsg(LPCTSTR from, LPCTSTR msg)
 	}
 	else {
 			CView* p;
+			CString t = GetTimeString();
 			if (!m_nick.Compare(from)) {
 				p = GetActiveView();
+				p->SetTextColor(Colors::GREY);
+				p->AppendText(t);
 				p->SetTextColor(0xff0000);
 			}
 			else {
 				p = CreateViewIfNoExist(from, ViewType::VIEW_PVT);
+				p->SetTextColor(Colors::GREY);
+				p->AppendText(t);
 				p->SetTextColor(0x000088);
 			}
 			p->AppendText(from);
@@ -1908,6 +2106,7 @@ void CMainFrame::OnPrivateMsg(LPCTSTR from, LPCTSTR msg)
 				p->ResetFormat();
 			}
 			p->SetSelEnd();
+			m_bottom.m_client.SetFocus();
 	}
 	
 }
@@ -1931,11 +2130,13 @@ void CMainFrame::OnUserJoin(LPCTSTR channel, LPCTSTR user)
 	else {*/
 		p = GetViewByName(channel);
 	//}
-
+	CString t = GetTimeString();
 	msg = user; msg += _T(" enters the channel ");
 	msg += channel;
 	msg += '\n';
 	if (p) {
+		p->SetTextColor(Colors::GREY);
+		p->AppendText(t);
 		p->SetTextColor(0x108800);
 		p->AppendText(msg);
 	}
@@ -1993,16 +2194,21 @@ void CMainFrame::OnUserJoin(LPCTSTR channel, LPCTSTR user)
 }
 void CMainFrame::OnUserPart(LPCTSTR channel, LPCTSTR user, LPCTSTR msg)
 {
-	CView* p = GetActiveView();
+	CView *p = GetViewByName(channel);
 	CString txt = user;
+	CString t = GetTimeString();
 
+	if (!p || !p->IsWindow())
+		p = GetActiveView();
+	p->SetTextColor(Colors::GREY);
+	p->AppendText(t);
 	txt += _T(" leaves the channel: "); txt += channel; txt += ' '; txt += msg; txt += '\n';
 	p->SetTextColor(0x108800);
 	p->AppendText(txt);
 	m_marquee.AddItem(txt);
 	m_tv.DeleteItem(user, TRUE, TRUE);
 }
-void CMainFrame::OnNotice(LPCTSTR channel, LPCTSTR user, LPCTSTR msg)
+void CMainFrame::OnNotice(LPCTSTR user, LPCTSTR msg)
 {
 	CView* pView = GetActiveView();
 	if (wcschr(msg, '\x1')) { // ctcp
@@ -2022,12 +2228,30 @@ void CMainFrame::OnNotice(LPCTSTR channel, LPCTSTR user, LPCTSTR msg)
 		pView->AppendText(tag);
 	}
 	else {
+		CString t = GetTimeString();
+		pView->SetTextColor(Colors::GREY);
+		pView->AppendText(t);
+		pView->SetTextColor(Colors::BLACK);
 		if (m_bNoColors)
 			pView->AppendText(msg);
 		else
 			pView->AppendTextIrc(msg);
 	}
 	//pView->AppendText(_T("\n"));
+}
+
+void CMainFrame::OnAction(LPCTSTR channel,LPCTSTR from, LPCTSTR msg)
+{
+	CView* p = GetViewByName(channel);
+
+	if (p && p->IsWindow()) {
+		CString code = from;
+		code += _T(": ");
+		p->SetTextColor(0x0000ff);
+		p->AppendText(code);
+		p->AppendText(msg);
+		p->AppendText(_T("\n"));
+	}
 }
 void CMainFrame::OnPing(LPCTSTR code)
 {
@@ -2046,46 +2270,72 @@ void CMainFrame::OnUnknownCmd(LPCTSTR line)
 void CMainFrame::SendChannelMsg(LPCTSTR channel, LPCTSTR msg)
 {
 	CStringA  code = "PRIVMSG ";
+	int res;
 
 	code += channel;
 	code += " :";
 	code += msg;
 	code += "\r\n";
-	m_sock.SendString(code);
+	if (!m_bssl)
+		res = m_sock.SendString(code);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(code);
+#endif
 }
 void CMainFrame::SendPrivateMsg(LPCTSTR to, LPCTSTR msg)
 {
 	CStringA  code = "PRIVMSG ";
+	int res;
 
 	code += to;
 	code += " :";
 	code += msg;
 	code += "\r\n";
-	m_sock.SendString(code);
+	if (!m_bssl)
+		res = m_sock.SendString(code);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(code);
+#endif
 }
 
 void CMainFrame::SendNoticeMsg(LPCTSTR to, LPCTSTR msg)
 {
 	CStringA  code = "NOTICE ";
+	int res;
 
 	code += to;
 	code += " :";
 	code += msg;
 	code += "\r\n";
-	m_sock.SendString(code);
+	if (!m_bssl)
+		res = m_sock.SendString(code);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(code);
+#endif
 }
 
 void CMainFrame::JoinChannel(LPCTSTR channel)
 {
 	CStringA  code = "JOIN ";
+	int res;
 
 	code += channel;
 	code += "\r\n";
-	m_sock.SendString(code);
+	if (!m_bssl)
+		res = m_sock.SendString(code);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(code);
+#endif
+	ATLTRACE(_T("JoinChannel %d\n"), res);
 }
 void CMainFrame::LeaveChannel(LPCTSTR channel, LPCTSTR msg)
 {
 	CStringA  code = "PART ";
+	int res;
 
 	code += channel;
 	if (msg) {
@@ -2093,79 +2343,141 @@ void CMainFrame::LeaveChannel(LPCTSTR channel, LPCTSTR msg)
 		code += msg;
 	}
 	code += "\r\n";
-	m_sock.SendString(code);
+	if (!m_bssl)
+		res = m_sock.SendString(code);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(code);
+#endif
 }
 void CMainFrame::Quit(LPCTSTR msg)
 {
 	CStringA  code = "QUIT";
+	int res;
 
 	if (msg) {
 		code += " :";
 		code += msg;
 	}
 	code += "\r\n";
-	m_sock.SendString(code);
+	if (!m_bssl)
+		res = m_sock.SendString(code);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(code);
+#endif
 }
 void CMainFrame::SendPass(LPCTSTR pass)
 {
 	CStringA  code = "PASS ";
+	int res;
 
 	code += pass;
 	code += "\r\n";
-	m_sock.SendString(code);
+	if (!m_bssl)
+		res = m_sock.SendString(code);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(code);
+	ATLTRACE(_T("SendPass %d\n"), res);
+	if (res <= 0) {
+		m_sock.OutputSSLError(res);
+	}
+#endif
 }
 void CMainFrame::SendNick(LPCTSTR nick)
 {
 	CStringA  code = "NICK ";
-
+	int res;
+	
 	code += nick;
 	code += "\r\n";
-	m_sock.SendString(code);
+	if (!m_bssl)
+		res = m_sock.SendString(code);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(code);
+#endif
+	ATLTRACE(_T("SendNick %d\n"), res);
 }
 void CMainFrame::SendUser(LPCTSTR user, LPCTSTR realname)
 {
 	CStringA code = "USER ";
+	int res;
 
 	code += user;
 	code += ' ';
 	code += "0 * :";
 	code += realname;
 	code += "\r\n";
-	m_sock.SendString(code);
+	if (!m_bssl)
+		res = m_sock.SendString(code);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(code);
+#endif
+	ATLTRACE(_T("SendUser %d\n"), res);
 }
 void CMainFrame::ListChannels()
 {
 	CStringA  code = "LIST";
+	int res;
 	code += "\r\n";
-	m_sock.SendString(code);
+	m_lv.DeleteAllItems();
+	if (!m_bssl)
+		res = m_sock.SendString(code);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(code);
+#endif
 }
 
 void CMainFrame::ListChannelNames(LPCTSTR channel)
 {
 	CStringA  code = "NAMES ";
+	int res;
+
 	code += channel;
 	code += "\r\n";
-	m_sock.SendString(code);
+	if (!m_bssl)
+		res = m_sock.SendString(code);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(code);
+#endif
 }
 
 void CMainFrame::GetTopic(LPCTSTR channel)
 {
 	CStringA  code = "TOPIC ";
+	int res;
 	code += channel;
 	code += "\r\n";
-	m_sock.SendString(code);
+	if (!m_bssl)
+		res = m_sock.SendString(code);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(code);
+#endif
 }
 
 void CMainFrame::GetMode(LPCTSTR NameOrChannel)
 {
 	CStringA cmd;
+	int res;
 	cmd = "MODE "; cmd += NameOrChannel; cmd += "\r\n";
-	m_sock.SendString(cmd);
+	if (!m_bssl)
+		res = m_sock.SendString(cmd);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(cmd);
+#endif
 }
 
 void CMainFrame::Pong(LPCTSTR code)
 {
 	CStringA pong;
+	int res;
 
 	pong += "PONG ";
 	if (!code)
@@ -2174,7 +2486,12 @@ void CMainFrame::Pong(LPCTSTR code)
 		pong += code;
 	pong += "\r\n";
 
-	m_sock.SendString(pong);
+	if (!m_bssl)
+		res = m_sock.SendString(pong);
+#ifdef NO5_SSL
+	else
+		res = m_sock.SendStringSSL(pong);
+#endif
 }
 
 void CMainFrame::RequestVersion(LPCTSTR from)
@@ -2197,6 +2514,15 @@ void CMainFrame::RequestPing(LPCTSTR from)
 void CMainFrame::RequestTime(LPCTSTR from)
 {
 	SendPrivateMsg(from, _T("\001TIME\001"));
+}
+
+void CMainFrame::SendAction(LPCTSTR channel, LPCTSTR msg)
+{
+	CString code;
+
+	code.Format(_T("\001ACTION %s\001"), msg);
+	SendChannelMsg(channel, code);
+	OnAction(channel, m_nick, msg);
 }
 
 void CMainFrame::AnswerVersionRequest(LPCTSTR from)
@@ -2251,7 +2577,7 @@ void CMainFrame::AnswerTimeRequest(LPCTSTR from)
 
 		s.TrimRight();
 		msg.Format(_T("\001TIME %s\001"), (LPCTSTR)s);
-		/*SendNoticeMsg(from, msg);*/
+		SendNoticeMsg(from, msg);
 		CView* pView = GetActiveView();
 		pView->AppendText(_T("Sent CTCP TIME reply -> ") + msg + '\n');
 	}
@@ -2261,31 +2587,61 @@ void CMainFrame::WhoIs(LPCTSTR nick)
 {
 	if (m_sock.IsConnected()) {
 		CStringA msg = "WHOIS ";
+		int res;
 		msg += nick;
 		msg += "\r\n";
 
-		m_sock.SendString(msg);
+		if (!m_bssl)
+			res = m_sock.SendString(msg);
+#ifdef NO5_SSL
+		else
+			res = m_sock.SendStringSSL(msg);
+#endif
 	}
 }
 void CMainFrame::Who(LPCTSTR nick)
 {
 	if (m_sock.IsConnected()) {
 		CStringA msg = "WHO ";
+		int res;
 		msg += nick;
 		msg += "\r\n";
 
-		m_sock.SendString(msg);
+		if (!m_bssl)
+			res = m_sock.SendString(msg);
+#ifdef NO5_SSL
+		else
+			res = m_sock.SendStringSSL(msg);
+#endif
 	}
 }
 void CMainFrame::WhoWas(LPCTSTR nick)
 {
 	if (m_sock.IsConnected()) {
+		int res;
 		CStringA msg = "WHOWAS ";
 		msg += nick;
 		msg += "\r\n";
 
-		m_sock.SendString(msg);
+		if (!m_bssl)
+			res = m_sock.SendString(msg);
+#ifdef NO5_SSL
+		else
+			res = m_sock.SendStringSSL(msg);
+#endif
 	}
+}
+
+CString CMainFrame::GetTimeString() const
+{
+	CString s;
+	CStringBuffer buf(s, 100);
+	struct tm tm = { 0 };
+	time_t t = time(&t);
+	localtime_s(&tm, &t);
+	memset(buf, 0, 100);
+	_tcsftime(buf, 100, _T("<%T> "), &tm);
+	return s;
 }
 
 // CChannelsViewFrame

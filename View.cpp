@@ -216,16 +216,20 @@ void CBottom::CreateToolBar()
 	m_tb.SetButtonInfo(ID_EDIT_BOLD, TBIF_STATE, 0, TBSTATE_ENABLED, NULL, 0, 0, 0, 0);
 	m_tb.SetButtonInfo(ID_EDIT_ITALIC, TBIF_STATE , 0, TBSTATE_ENABLED, NULL, 0, 0, 0, 0);
 	m_tb.SetButtonInfo(ID_EDIT_UNDERLINE, TBIF_STATE, 0, TBSTATE_ENABLED, NULL, 0, 0, 0, 0);
+	
 }
 
 LRESULT CBottom::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
 {
 	CreateToolBar();
 	CreateComboFonts();
+	CreateComboSize();
 	CreateColorCombos();
 	CreateClient();
 	m_hAccel = ::LoadAccelerators(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
 	m_hWndClient = m_client;
+	//
+	//
 	return 0;
 }
 
@@ -283,12 +287,30 @@ void CBottom::CreateComboFonts()
 	m_cbFonts.Create(m_tb, rc, (LPCTSTR)0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | \
 		CBS_DROPDOWNLIST | CBS_SORT | CBS_OWNERDRAWVARIABLE | CBS_HASSTRINGS, 0, IDC_COMBO_FONTS);
 	m_cbFonts.SetExtendedFontStyle(FPS_EX_TYPEICON | FPS_EX_SHOWFACE);
-	ToolbarAddControl(m_tb, m_cbFonts, 1, 7, TRUE);
+	ToolbarAddControl(m_tb, m_cbFonts, 1, 6, TRUE);
 	m_cbFonts.Dir();
 	int index = m_cbFonts.FindString(0, _T("Arial"));
 	if (index >= 0)
 		m_cbFonts.SetCurSel(index);
 	UpdateLayout(FALSE);
+}
+
+void CBottom::CreateComboSize()
+{
+	CRect rc;
+
+	rc.bottom = 250;
+	m_cbSize.Create(m_tb, rc, (LPCTSTR)0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | CBS_DROPDOWNLIST, 0,
+		IDC_COMBO_SIZE);
+	CString text;
+
+	for (int i = 6; i <= 36; i += 2) {
+		text.Format(_T("%d"), i);
+		m_cbSize.AddString(text);
+	}
+	m_cbSize.SelectString(0, _T("12"));
+	ToolbarAddControl(m_tb, m_cbSize, 8, 3, TRUE);
+	m_cbSize.SetFont(AtlGetDefaultGuiFont());
 }
 
 void CBottom::CreateColorCombos()
@@ -297,17 +319,29 @@ void CBottom::CreateColorCombos()
 
 	rc.bottom = 250;
 	m_cbFore.Create(m_tb, rc, 0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED, 0, IDC_COMBO_FORE);
-	ToolbarAddControl(m_tb, m_cbFore, 12, 3, TRUE);
+	ToolbarAddControl(m_tb, m_cbFore, 15, 3, TRUE);
 	for (int i = 0; i <= 15; i++) {
 		m_cbFore.AddColor(i, ColorFromCode(i));
 	}
-	m_cbBack.Create(m_tb, rc, 0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED, 0, IDC_COMBO_BACK);
-	ToolbarAddControl(m_tb, m_cbBack, 16, 3, TRUE);
+	m_cbBack.Create(m_tb, rc, 0, WS_CHILD|WS_VISIBLE | WS_VSCROLL | WS_BORDER | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED, 0, IDC_COMBO_BACK);
+	ToolbarAddControl(m_tb, m_cbBack, 19, 3, TRUE);
 	for (int i = 0; i <= 15; i++) {
 		m_cbBack.AddColor(i, ColorFromCode(i));
 	}
 	m_cbFore.SelectColor(0);
 	m_cbBack.SelectColor(0xffffff);
+
+	m_tt.Create(m_hWnd, 0, 0, WS_CHILD|WS_VISIBLE|TTS_ALWAYSTIP | TTS_NOPREFIX, 0,IDC_TT_FORE);
+	ATLASSERT(m_tt.IsWindow());
+	::SetWindowPos(m_tt, HWND_TOPMOST, 0, 0, 0, 0,SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+	TTTOOLINFO ti = { sizeof(ti) };
+	ti.uFlags = TTF_IDISHWND;
+	ti.uId = (UINT_PTR)(HWND(m_cbFore));
+	ti.hwnd = m_hWnd;// m_tb;
+	ti.lpszText = LPSTR_TEXTCALLBACK;
+	BOOL res = m_tt.AddTool(&ti);
+	ATLASSERT(res);
+	m_tt.Activate(TRUE);
 }
 
 void CBottom::DisableFormat()
@@ -333,7 +367,18 @@ LRESULT CBottom::OnFontsSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWn
 	int index = m_cbFonts.GetCurSel();
 	CString font;
 	m_cbFonts.GetLBText(index, font);
+	m_client.SetTextFontName(font, SCF_ALL);
 	return m_frame.SendMessage(WM_ONFONTCHANGE, 0, (LPARAM)(LPCTSTR)font);
+}
+
+LRESULT CBottom::OnSizeSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	int index = m_cbSize.GetCurSel();
+	CString text;
+	m_cbSize.GetLBText(index, text);
+	int size = _wtoi(text);
+	m_client.SetTextHeight(size, SCF_ALL);
+	return m_frame.SendMessage(WM_ONFONTSIZECHANGE, 0, (LPARAM)size);
 }
 
 LRESULT CBottom::OnBold(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
@@ -381,6 +426,22 @@ LRESULT CBottom::OnBackSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWnd
 	return 0;
 }
 
+int CBottom::GetDesiredHeight()
+{
+	CReBarCtrl rb = m_hWndToolBar;
+	CClientDC dc(m_client);
+	LPCTSTR text = _T("M");
+	CSize sz;
+	int h = 0;
+
+	h = rb.GetBarHeight();
+	dc.GetTextExtent(text, 1, &sz);
+	h += sz.cy;
+	// borders
+	h += 150; // oh fuck, whatever TODO
+	return h;
+}
+
 /// <summary>
 /// 
 /// </summary>
@@ -399,6 +460,64 @@ LRESULT CBottomClient::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/
 		SetWindowText(_T(""));
 		m_frame.SendMessage(WM_MSGFROMBOTTOM, (WPARAM)(LPCTSTR)str);
 		bHandled = TRUE;
+	}
+	else if (wParam == VK_TAB) {
+		CHARRANGE cr;
+		
+		GetSel(cr);
+		if (cr.cpMin == cr.cpMax) {
+			TEXTRANGE tr;
+
+			cr.cpMin = FindWordBreak(WB_MOVEWORDLEFT, cr.cpMin);
+			tr.chrg = cr;
+			if (cr.cpMax > cr.cpMin) {
+				CString sPartial;
+				NO5TL::CStringArray arr;
+
+				{
+					NO5TL::CStringBuffer buf(sPartial, cr.cpMax - cr.cpMin + 1);
+					tr.lpstrText = LPTSTR(buf);
+					GetTextRange(&tr);
+				}
+
+				if (FindNames(sPartial, &arr)) {
+					CString name;
+
+					if (arr.GetSize() == 1) { // single match. append it
+						name = arr[0];
+					}
+					else {
+						CPoint ptCaret;
+						CWindow frame;
+						CRect rcEdit;
+						HWND hWndFocus;
+
+						GetCaretPos(&ptCaret);
+						ClientToScreen(&ptCaret);
+						m_frame.ScreenToClient(&ptCaret);
+						GetWindowRect(rcEdit);
+						ptCaret.y = rcEdit.top;
+
+						CAutoCompleteDlg dlg(name, ptCaret, NULL, &arr);
+
+						hWndFocus = GetFocus();
+						if (dlg.DoModal(m_pBottom->m_hWnd) == IDOK) {
+
+						}
+						else
+							name.Empty();
+						::SetFocus(hWndFocus);
+
+					}
+					if (name.GetLength()) {
+						SetSel(cr);
+						ReplaceSel(name, TRUE);
+					}
+				}
+				else
+					bHandled = FALSE;
+			}
+		}
 	}
 	else
 		bHandled = FALSE;
@@ -420,12 +539,19 @@ LRESULT CBottomClient::OnChar(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 		else
 			bHandled = FALSE;
 	}
+	else if (wParam == '\t')
+		bHandled = TRUE;
 	else
 		bHandled = FALSE;
 	if (wParam == '\r' || wParam == '\n') {
 		bHandled = TRUE;
 	}
 	return 0;
+}
+
+int CBottomClient::FindNames(LPCTSTR partial, CStringArray *pres)
+{
+	return (int)m_frame.SendMessage(WM_FINDUSER, (WPARAM)partial, (LPARAM)pres);
 }
 
 BOOL ToolbarAddControl(HWND hToolBar, HWND hWnd, int pos, int count, BOOL bComboBox)
