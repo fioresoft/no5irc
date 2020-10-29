@@ -1395,7 +1395,7 @@ void CMainFrame::OnSockError(int error)
 }
 void CMainFrame::OnSockRead(int error)
 {
-	const int buflen = 16384 * 2;// 4096 * 2; // = 16384 * 2 whats better? big or small?
+	const int buflen = 512;// 16384 * 2;// 4096 * 2; whats better? big or small?
 	static CDataBuffer<char> buffer(buflen);
 	static char buf[buflen] = { 0 };
 	CSimpleArray<CString> lines;
@@ -1461,7 +1461,7 @@ void CMainFrame::OnSockRead(int error)
 	//	wf.Write(buffer);
 #endif
 	//int voids = buffer.ReplaceChars(0, '.');
-	//buffer.AddNull();
+	buffer.AddNull();
 	//ATLTRACE("\n nulls = %d\n", voids);
 	buffer.Init("\r\n", true);
 	const int count = buffer.GetAll3(lines);
@@ -1818,11 +1818,22 @@ void CMainFrame::OnChannelList(LPCTSTR channel, LPCTSTR users, LPCTSTR topic)
 void CMainFrame::OnBeginningOfList()
 {
 	CView* pView = GetActiveView();
+	CString t = GetTimeString();
+
+	pView->SetTextColor(Colors::GREY);
+	pView->AppendText(t);
+	pView->SetTextColor(Colors::GREEN);
+
 	pView->AppendText(_T("beggining of list \n"));
 }
 void CMainFrame::OnEndOfList()
 {
 	CView* pView = GetActiveView();
+	CString t = GetTimeString();
+
+	pView->SetTextColor(Colors::GREY);
+	pView->AppendText(t);
+	pView->SetTextColor(Colors::GREEN);
 	pView->AppendText(_T("end of list \n"));
 }
 void CMainFrame::OnChannelMode(LPCTSTR channel, LPCTSTR modes)
@@ -1830,6 +1841,11 @@ void CMainFrame::OnChannelMode(LPCTSTR channel, LPCTSTR modes)
 	CView* pView = GetActiveView();
 	CString msg;
 	ViewData* data = GetViewDataByName(channel);
+	CString t = GetTimeString();
+
+	pView->SetTextColor(Colors::GREY);
+	pView->AppendText(t);
+	pView->SetTextColor(Colors::BLACK);
 
 	if(wcschr(modes,'c') != NULL)
 		m_bNoColors = true;
@@ -1850,6 +1866,11 @@ void CMainFrame::OnUserMode(LPCTSTR user, LPCTSTR modes)
 {
 	CView* pView = GetActiveView();
 	CString msg;
+	CString t = GetTimeString();
+
+	pView->SetTextColor(Colors::GREY);
+	pView->AppendText(t);
+	pView->SetTextColor(Colors::BLACK);
 
 	msg = _T("MODE of "); msg += user; msg += _T(" is "); msg += modes;
 	pView->AppendText(msg + '\n');
@@ -1861,6 +1882,12 @@ void CMainFrame::OnChannelCreationTime(LPCTSTR channel, time_t time)
 
 	if (time) {
 		CView* pView = GetActiveView();
+		CString tme = GetTimeString();
+
+		pView->SetTextColor(Colors::GREY);
+		pView->AppendText(tme);
+		pView->SetTextColor(Colors::BLACK);
+
 		struct tm* ptm = std::localtime(&time);
 		CString t = _tasctime(ptm);
 		msg = channel; msg += _T(" was created on ") + t;
@@ -1901,7 +1928,7 @@ void CMainFrame::OnNoTopic(LPCTSTR channel)
 	p->SetTextColor(Colors::GREY);
 	p->AppendText(t);
 	p->SetTextColor(Colors::MARRON);
-	p->AppendText(_T("This channel has no topic"));
+	p->AppendText(_T("This channel has no topic\n"));
 	CNo5TreeItem parent = m_tv.FindItem(m_server, TRUE, FALSE);
 	if (!m_tv.FindItem(channel, FALSE, TRUE)) {
 		m_tv.InsertItem(channel,8,8,parent, TVI_SORT);
@@ -1932,6 +1959,11 @@ void CMainFrame::OnWhoSetTheTopic(LPCTSTR channel, LPCTSTR user, time_t time)
 {
 	CString t;
 	CView* pView = GetViewByName(channel);
+	CString tme = GetTimeString();
+
+	pView->SetTextColor(Colors::GREY);
+	pView->AppendText(tme);
+	pView->SetTextColor(Colors::BLACK);
 
 	if (time) {
 		struct tm* ptm = std::localtime(&time);
@@ -2006,6 +2038,11 @@ void CMainFrame::OnNamesInChannel(LPCTSTR channel, const CSimpleArray<CString>& 
 void CMainFrame::OnNamesEnd(LPCTSTR channel)
 {
 	CView* pView = GetActiveView();
+	CString t = GetTimeString();
+
+	pView->SetTextColor(Colors::GREY);
+	pView->AppendText(t);
+	pView->SetTextColor(Colors::BLACK);
 	
 	GetMode(channel);
 	pView->AppendText(_T("end of users list\n"));
@@ -2114,7 +2151,10 @@ void CMainFrame::OnPrivateMsg(LPCTSTR from, LPCTSTR msg)
 void CMainFrame::OnUserQuit(LPCTSTR channel, LPCTSTR user, LPCTSTR msg)
 {
 	CView* pView = GetActiveView();
+	CString t = GetTimeString();
 	ATLASSERT(pView);
+	pView->SetTextColor(Colors::GREY);
+	pView->AppendText(t);
 	pView->SetTextColor(0xa0a0a0);
 	pView->AppendText(msg);
 	m_tv.DeleteItem(user, TRUE, TRUE);
@@ -2229,6 +2269,7 @@ void CMainFrame::OnNotice(LPCTSTR user, LPCTSTR msg)
 	}
 	else {
 		CString t = GetTimeString();
+
 		pView->SetTextColor(Colors::GREY);
 		pView->AppendText(t);
 		pView->SetTextColor(Colors::BLACK);
@@ -2246,6 +2287,11 @@ void CMainFrame::OnAction(LPCTSTR channel,LPCTSTR from, LPCTSTR msg)
 
 	if (p && p->IsWindow()) {
 		CString code = from;
+		CString t = GetTimeString();
+
+		p->SetTextColor(Colors::GREY);
+		p->AppendText(t);
+
 		code += _T(": ");
 		p->SetTextColor(0x0000ff);
 		p->AppendText(code);
@@ -2256,6 +2302,10 @@ void CMainFrame::OnAction(LPCTSTR channel,LPCTSTR from, LPCTSTR msg)
 void CMainFrame::OnPing(LPCTSTR code)
 {
 	CView* pView = GetActiveView();
+	CString t = GetTimeString();
+	pView->SetTextColor(Colors::GREY);
+	pView->AppendText(t);
+	pView->SetTextColor(Colors::BLACK);
 
 	Pong(code);
 	pView->AppendText(_T("ping received - pong returned\r\n"));
@@ -2263,9 +2313,15 @@ void CMainFrame::OnPing(LPCTSTR code)
 void CMainFrame::OnUnknownCmd(LPCTSTR line)
 {
 	CView* p = GetActiveView();
+	CString t = GetTimeString();
+
+	p->SetTextColor(Colors::GREY);
+	p->AppendText(t);
+	p->SetTextColor(Colors::BLACK);
 	p->AppendText(line);
 	p->AppendText(_T("\n"));
 }
+//
 
 void CMainFrame::SendChannelMsg(LPCTSTR channel, LPCTSTR msg)
 {
@@ -2540,7 +2596,9 @@ void CMainFrame::AnswerVersionRequest(LPCTSTR from)
 		vi.GetString(cp, _T("ProductVersion"), version);
 		tag.Format(_T("\001VERSION %s-%s-Windows by https://fioresoft.net\001"), (LPCTSTR)product, (LPCTSTR)version);
 		SendNoticeMsg(from, tag);
-		pView->AppendText(_T("Sent CTCP VERSION reply -> ") + tag + '\n');
+		pView->AppendText(_T("Sent CTCP VERSION reply -> ") + tag + _T(" from "));
+		pView->AppendText(from);
+		pView->AppendText(_T("\n"));
 	}
 }
 void CMainFrame::AnswerUserinfoRequest(LPCTSTR from)
@@ -2551,7 +2609,9 @@ void CMainFrame::AnswerUserinfoRequest(LPCTSTR from)
 		code.Format(_T("\001USERINFO %s\001"), m_userinfo.IsEmpty() ? _T("there is nothing about me") : m_userinfo);
 		SendNoticeMsg(from, code);
 		CView* pView = GetActiveView();
-		pView->AppendText(_T("Sent CTCP USERINFO reply -> ") + code + '\n');
+		pView->AppendText(_T("Sent CTCP USERINFO reply -> ") + code + _T(" from "));
+		pView->AppendText(from);
+		pView->AppendText(_T("\n"));
 	}
 
 }
@@ -2564,7 +2624,9 @@ void CMainFrame::AnswerPingRequest(LPCTSTR from)
 		code.Format(_T("\001PING %lu\001"), (unsigned int)t);
 		SendNoticeMsg(from, code);
 		CView * pView = GetActiveView();
-		pView->AppendText(_T("Sent CTCP PING reply -> ") + code + '\n');
+		pView->AppendText(_T("Sent CTCP PING reply -> ") + code + _T(" from "));
+		pView->AppendText(from);
+		pView->AppendText(_T("\n"));
 	}
 }
 void CMainFrame::AnswerTimeRequest(LPCTSTR from)
@@ -2579,7 +2641,9 @@ void CMainFrame::AnswerTimeRequest(LPCTSTR from)
 		msg.Format(_T("\001TIME %s\001"), (LPCTSTR)s);
 		SendNoticeMsg(from, msg);
 		CView* pView = GetActiveView();
-		pView->AppendText(_T("Sent CTCP TIME reply -> ") + msg + '\n');
+		pView->AppendText(_T("Sent CTCP TIME reply -> ") + msg + _T(" from "));
+		pView->AppendText(from);
+		pView->AppendText(_T("\n"));
 	}
 }
 
@@ -2640,7 +2704,7 @@ CString CMainFrame::GetTimeString() const
 	time_t t = time(&t);
 	localtime_s(&tm, &t);
 	memset(buf, 0, 100);
-	_tcsftime(buf, 100, _T("<%T> "), &tm);
+	_tcsftime(buf, 100, _T("[%T] "), &tm);
 	return s;
 }
 
