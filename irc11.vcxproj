@@ -90,7 +90,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;STRICT;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/D_WTL_NO_CSTRING /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D_WTL_NO_CSTRING /D_CRT_SECURE_NO_WARNINGS /DNO5_SSL %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -123,7 +123,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_WINDOWS;STRICT;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/D_WTL_NO_CSTRING /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D_WTL_NO_CSTRING /D_CRT_SECURE_NO_WARNINGS /DNO5_SSL %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -154,11 +154,11 @@
       <ExceptionHandling />
       <DebugInformationFormat />
       <PreprocessorDefinitions>WIN32;_WINDOWS;STRICT;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/D_WTL_NO_CSTRING %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D_WTL_NO_CSTRING /DNO5_SSL %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>ws2_32.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;Version.lib;C:\Program Files (x86)\OpenSSL-Win32\lib\VC\static\libcrypto32MT.lib;C:\Program Files (x86)\OpenSSL-Win32\lib\VC\static\libssl32MT.lib;Crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>
@@ -185,11 +185,11 @@
       <ExceptionHandling />
       <DebugInformationFormat />
       <PreprocessorDefinitions>_WINDOWS;STRICT;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/D_WTL_NO_CSTRING %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D_WTL_NO_CSTRING /DNO5_SSL %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>ws2_32.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;Version.lib;C:\Program Files (x86)\OpenSSL-Win32\lib\VC\static\libcrypto32MT.lib;C:\Program Files (x86)\OpenSSL-Win32\lib\VC\static\libssl32MT.lib;Crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>
@@ -211,6 +211,7 @@
     <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="COptionsDlg.cpp" />
+    <ClCompile Include="IFontOptions.cpp" />
     <ClCompile Include="IIRCEvents.cpp" />
     <ClCompile Include="irc11.cpp" />
     <ClCompile Include="MainFrm.cpp" />
@@ -227,6 +228,7 @@
     <ClInclude Include="AboutDlg.h" />
     <ClInclude Include="ChildFrm.h" />
     <ClInclude Include="COptionsDlg.h" />
+    <ClInclude Include="IFontOptions.h" />
     <ClInclude Include="IIrc.h" />
     <ClInclude Include="IIRCEvents.h" />
     <ClInclude Include="MainFrm.h" />

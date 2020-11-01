@@ -8,6 +8,7 @@
 #include "IIrc.h"
 #include "usermsgs.h"
 #include "View.h"
+#include "IFontOptions.h"
 #ifdef NO5_SSL
 #include "openssl/ssl.h"
 #include "openssl/ssl3.h"
@@ -142,7 +143,8 @@ public:
 		SSL_CTX_set_verify_depth(ctx, 1);
 		ssl = SSL_new(ctx);
 		if (SSL_get_verify_result(ssl) == X509_V_OK) {
-			//SSL_set_options(ssl, SSL_MODE_ASYNC);
+			SSL_set_options(ssl, SSL_MODE_ASYNC);
+			SSL_set_connect_state(ssl);
 			return TRUE;
 		}
 		else
@@ -345,6 +347,7 @@ private:
 	CString m_userinfo;
 	MarqueeOptions mo;
 	bool m_bssl;
+	IFontOptions* m_pfo;
 	
 	//
 	void CreateTreeView();

@@ -248,7 +248,7 @@ END
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION 1,0,1,0
- PRODUCTVERSION 0,6,1,5
+ PRODUCTVERSION 0,6,2,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -266,11 +266,11 @@ BEGIN
             VALUE "CompanyName", "Fioresoft, est 1996"
             VALUE "FileDescription", "NO5 IRC"
             VALUE "FileVersion", "1,0,1,0"
-            VALUE "InternalName", "irc09"
+            VALUE "InternalName", "irc11"
             VALUE "LegalCopyright", "Copyright 2020"
-            VALUE "OriginalFilename", "irc09.exe"
+            VALUE "OriginalFilename", "irc11.exe"
             VALUE "ProductName", "NO5 IRC"
-            VALUE "ProductVersion", "0.6.1.5"
+            VALUE "ProductVersion", "0.6.2.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -304,7 +304,7 @@ END
 
 STRINGTABLE
 BEGIN
-    ID_FILE_NEW             "Create a new document\nNew"
+    ID_FILE_NEW             "Connect to a server\nConnect"
     ID_FILE_OPEN            "Open an existing document\nOpen"
     ID_FILE_CLOSE           "Close the active document\nClose"
     ID_FILE_SAVE            "Save the active document\nSave"
@@ -390,6 +390,24 @@ END
 STRINGTABLE
 BEGIN
     ID_VIEW_DARKMODE        "Sets / removes Dark Mode\nDark Mode"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_BOLD            "Toggle Bold\nBold"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_ITALIC          "Togggles Italic\nItalic"
+    ID_EDIT_UNDERLINE       "Toggles Underline\nUnderline"
+    IDC_FORE                "Selects the foregorund Colour\nForeground Colour"
+    IDC_BACK                "Selects the Background Colour\nBackground Color"
+END
+
+STRINGTABLE
+BEGIN
+    IDC_COMBO_FONTS         "Select the Font for the active view\nFont"
 END
 
 #endif    // Inglês (Estados Unidos) resources
@@ -481,7 +499,7 @@ BEGIN
     EDITTEXT        IDC_EDIT3,48,72,127,14,ES_AUTOHSCROLL
     EDITTEXT        IDC_EDIT4,48,96,126,14,ES_AUTOHSCROLL
     COMBOBOX        IDC_COMBO2,49,118,129,241,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    EDITTEXT        IDC_EDIT6,210,120,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT6,210,115,40,14,ES_AUTOHSCROLL
     EDITTEXT        IDC_EDIT5,58,140,120,14,ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",IDOK,198,155,50,14
     PUSHBUTTON      "Cancelar",IDCANCEL,252,155,50,14
@@ -492,6 +510,7 @@ BEGIN
     LTEXT           "Password: ",IDC_STATIC,6,96,36,8
     LTEXT           "Initial Channel",IDC_STATIC,7,141,46,8
     LTEXT           "Port:",IDC_STATIC,186,120,18,8
+    CONTROL         "Is  SSL Port ?",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,190,136,96,16
 END
 
 IDD_PROPPAGE_SMALL DIALOGEX 0, 0, 195, 127
@@ -502,6 +521,23 @@ BEGIN
     CONTROL         "Answer CTCP queries",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,7,182,10
     LTEXT           "USERINFO:",IDC_STATIC,6,24,36,8
     EDITTEXT        IDC_EDIT1,6,36,186,14,ES_AUTOHSCROLL
+END
+
+IDD_PROPPAGE_SMALL1 DIALOGEX 0, 0, 195, 120
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Página de Propriedades"
+FONT 8, "MS Shell Dlg", 400, 0, 0x0
+BEGIN
+    GROUPBOX        "Items",IDC_STATIC,6,12,184,78
+    COMBOBOX        IDC_COMBO1,12,24,102,74,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Font Color",IDC_STATIC,6,42,34,8
+    PUSHBUTTON      "Choose",IDC_BUTTON2,84,42,50,12
+    PUSHBUTTON      "Default",IDC_BUTTON3,138,42,50,12
+    LTEXT           "Font Back Color",IDC_STATIC,6,60,51,8
+    PUSHBUTTON      "Choose",IDC_BUTTON4,84,60,50,12
+    PUSHBUTTON      "Default",IDC_BUTTON5,138,60,50,14
+    PUSHBUTTON      "Reset Defaults",IDC_BUTTON1,9,2,60,11
+    LTEXT           "Estático",IDC_STATIC1,6,96,185,23
 END
 
 
@@ -530,6 +566,10 @@ BEGIN
     END
 
     IDD_PROPPAGE_SMALL, DIALOG
+    BEGIN
+    END
+
+    IDD_PROPPAGE_SMALL1, DIALOG
     BEGIN
     END
 END
@@ -564,10 +604,16 @@ BEGIN
     0, 0, 0, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
+    0, 0, 0, 0,
     0, 0, 0, 0
 END
 
 IDD_PROPPAGE_SMALL AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_PROPPAGE_SMALL1 AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

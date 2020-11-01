@@ -141,6 +141,11 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	pLoop->AddMessageFilter(&m_ChannelsView);
 	pLoop->AddMessageFilter(&m_bottom);
 
+	CreateFontOptions(&m_pfo);
+	CString file = m_path;
+	file += _T("no5irc.ini");
+	m_pfo->Read(file);
+
 	return 0;
 }
 
@@ -160,6 +165,11 @@ LRESULT CMainFrame::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	pLoop->RemoveMessageFilter(&m_bottom);
 	pLoop->RemoveMessageFilter(&m_ChannelsView);
 	pLoop->RemoveIdleHandler(&m_ChannelsView);
+
+	CString file = m_path;
+	file += _T("no5irc.ini");
+	m_pfo->Write(file);
+	DestroyFontOptions(&m_pfo);
 
 	bHandled = FALSE;
 	return 1;
@@ -459,13 +469,18 @@ LRESULT CMainFrame::OnViewMarquee(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWn
 
 LRESULT CMainFrame::OnViewOptions(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	CPropertySheet ps(_T("Options"));
+	CPropertySheet ps(_T("Options"),1,m_hWnd);
 	COptionsDlgPage pp;
+	CFontOptionsDlgPage fop(m_pfo);
 
 	pp.m_bAllowCTCP = m_bAllowCTCP ? true : false;
 	pp.m_userinfo = m_userinfo;
 
-	BOOL res = ps.AddPage(pp);
+	pp.Create();
+	fop.Create();
+	BOOL res = ps.AddPage(&pp.m_psp);
+	ATLASSERT(res);
+	res = ps.AddPage(&fop.m_psp);
 	if (res) {
 		int res = ps.DoModal(m_hWnd);
 
@@ -1197,6 +1212,7 @@ BOOL CMainFrame::SaveUserSettings()
 void CMainFrame::OnLogin()
 {
 	CLoginDlg dlg;
+
 	dlg.m_servers = m_servers;
 	dlg.m_nick = m_nick;
 	dlg.m_real = m_name;
@@ -1219,6 +1235,7 @@ void CMainFrame::OnLogin()
 		m_pass = dlg.m_pass;
 		m_JoinChannel = dlg.m_JoinChannel;
 		m_port = dlg.m_port;
+		m_bssl = dlg.m_bssl;
 		BOOL res = m_sock.CreateSocket();
 		if (res) {
 			//res = m_sock.SetOption(SO_SNDBUF, 0);
@@ -1228,37 +1245,33 @@ void CMainFrame::OnLogin()
 			//res = m_sock.AsyncSelect(FD_READ | FD_WRITE | FD_CLOSE);
 			if (res) {
 #ifdef NO5_SSL
-				if (m_port.Get(true) != 6667) {
+				/*if (m_port.Get(true) != 6667) {
 					m_bssl = true;
-				}
+				}*/
 				if (m_bssl) {
 					res = m_sock.InitSSL();
-				}
-				if (res) {
 					CSocketAddress saddr;
 
-					if (m_bssl) {
-						res = saddr.Set(CT2CA(m_server), m_port);
+					res = saddr.Set(CT2CA(m_server), m_port);
+					if (res) {
+						res = m_sock.Connect(&saddr);
 						if (res) {
-							res = m_sock.Connect(&saddr);
-							if (res) {
-								int res = SSL_set_fd(m_sock.ssl, m_sock.GetHandle());
-								ATLASSERT(res == 1);
-								res = SSL_connect(m_sock.ssl);
-								if (res < 0) {
-									m_sock.OutputSSLError(res);
-								}
-								m_sock.AsyncSelect(FD_READ | FD_WRITE | FD_CLOSE);
+							int res = SSL_set_fd(m_sock.ssl, m_sock.GetHandle());
+							ATLASSERT(res == 1);
+							res = SSL_connect(m_sock.ssl);
+							if (res < 0) {
+								m_sock.OutputSSLError(res);
 							}
+							m_sock.AsyncSelect(FD_READ | FD_WRITE | FD_CLOSE);
 						}
 					}
-					else {
+				}
+				else {
 #endif
-						res = m_sock.Connect(CT2CA(m_server), m_port.Get(true));
-						if(res)
-							res = m_sock.AsyncSelect(FD_READ | FD_WRITE |FD_CONNECT| FD_CLOSE);
+					res = m_sock.Connect(CT2CA(m_server), m_port.Get(true));
+					if(res)
+						res = m_sock.AsyncSelect(FD_READ | FD_WRITE |FD_CONNECT| FD_CLOSE);
 #ifdef NO5_SSL
-					}
 				}
 #endif
 			}
@@ -1395,7 +1408,7 @@ void CMainFrame::OnSockError(int error)
 }
 void CMainFrame::OnSockRead(int error)
 {
-	const int buflen = 512;// 16384 * 2;// 4096 * 2; whats better? big or small?
+	const int buflen = 1024;
 	static CDataBuffer<char> buffer(buflen);
 	static char buf[buflen] = { 0 };
 	CSimpleArray<CString> lines;
@@ -1904,9 +1917,12 @@ void CMainFrame::OnBeginMOTD(LPCTSTR channel)
 void CMainFrame::OnMOTD(LPCTSTR channel, LPCTSTR msg)
 {
 	CView* pView = GetActiveView();
+	CColor fore, back;
 
 	pView->SetSelEnd();
-	pView->SetTextColor(0x00aa00, SCF_SELECTION);
+	m_pfo->motd(fore, back, false);
+	pView->SetTextColor(fore, SCF_SELECTION);
+	pView->SetTextBkColor(back, SCF_SELECTION);
 	pView->SetTextFontName(_T("Courier"), SCF_SELECTION);
 	pView->AppendText(msg);
 	pView->AppendText(_T("\n"));
@@ -1939,6 +1955,7 @@ void CMainFrame::OnTopic(LPCTSTR channel, LPCTSTR topic)
 {
 	CView* p = CreateViewIfNoExist(channel, ViewType::VIEW_CHANNEL);
 	CString t = GetTimeString();
+	CColor fore, back;
 
 	CNo5TreeItem parent = m_tv.FindItem(m_server, TRUE, FALSE);
 	if (!m_tv.FindItem(channel, FALSE, TRUE))
@@ -1948,7 +1965,9 @@ void CMainFrame::OnTopic(LPCTSTR channel, LPCTSTR topic)
 	else*/
 	p->SetTextColor(Colors::GREY);
 	p->AppendText(t);
-	p->SetTextColor(Colors::MARRON);
+	m_pfo->Topic(fore, back,false);
+	p->SetTextColor(fore);
+	p->SetTextBkColor(back);
 	p->AppendTextIrc(topic);
 	p->AppendText(_T("\n"));
 	p->ResetFormat();
@@ -2052,6 +2071,7 @@ void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg)
 {
 	CString t = GetTimeString();
 	CString str = user; str += _T(": ");
+	CColor fore, back;
 
 	if (wcschr(msg, '\x1')) { // ctcp
 		CString tag = RemoveDelimiters2(msg);
@@ -2075,14 +2095,31 @@ void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg)
 		p->SetTextBkColor(0);
 	}
 	else {
+		if (m_nick.Compare(user)) { // not me
+			m_pfo->GetUserName(fore, back);
+		}
+		else {// me
+			fore = m_pfo->MeFore(false, false);
+			back = m_pfo->MeBack(false, false);
+		}
 		p->SetBackgroundColor(0xffffff);
-		p->SetTextColor(0xFF0000);
-		p->SetTextBkColor(0xffffff);
+		p->SetTextColor(fore);
+		p->SetTextBkColor(back);
 	}
 	p->AppendText(str);
 	str = msg;
-	if (!m_bDarkMode)
-		p->SetTextColor(0);
+	if (!m_bDarkMode) {
+		if (m_nick.Compare(user)) { // not me
+			m_pfo->GetUserText(fore, back);
+		}
+		else { // me
+			fore = m_pfo->MyTextFore(false, false);
+			back = m_pfo->MyTextBack(false, false);
+		}
+		p->SetBackgroundColor(0xffffff);
+		p->SetTextColor(fore);
+		p->SetTextBkColor(back);
+	}
 	if (m_bNoColors)
 		p->AppendText(str);
 	else {
@@ -2118,22 +2155,40 @@ void CMainFrame::OnPrivateMsg(LPCTSTR from, LPCTSTR msg)
 	else {
 			CView* p;
 			CString t = GetTimeString();
+			CColor back, fore;
+
 			if (!m_nick.Compare(from)) {
 				p = GetActiveView();
 				p->SetTextColor(Colors::GREY);
 				p->AppendText(t);
-				p->SetTextColor(0xff0000);
+				fore = m_pfo->MeFore(false, false);
+				back = m_pfo->MeBack(false, false);
+				p->SetTextColor(fore);
+				p->SetTextBkColor(back);
 			}
 			else {
 				p = CreateViewIfNoExist(from, ViewType::VIEW_PVT);
 				p->SetTextColor(Colors::GREY);
 				p->AppendText(t);
-				p->SetTextColor(0x000088);
+				m_pfo->GetUserName(fore, back);
+				p->SetTextColor(fore);
+				p->SetTextBkColor(back);
 			}
 			p->AppendText(from);
 			p->AppendText(_T(": "));
-			p->SetTextColor(0);
 			CString str = msg;
+			p->SetSelEnd();
+			if (!m_nick.Compare(from)) {
+				fore = m_pfo->MyTextFore(false, false);
+				back = m_pfo->MyTextBack(false, false);
+				p->SetTextColor(fore);
+				p->SetTextBkColor(back);
+			}
+			else {
+				m_pfo->GetUserText(fore, back);
+				p->SetTextColor(fore);
+				p->SetTextBkColor(back);
+			}
 			//str += "\r\n";
 			if (m_bNoColors) {
 				p->AppendText(str);
@@ -2177,7 +2232,8 @@ void CMainFrame::OnUserJoin(LPCTSTR channel, LPCTSTR user)
 	if (p) {
 		p->SetTextColor(Colors::GREY);
 		p->AppendText(t);
-		p->SetTextColor(0x108800);
+		CColor fore = m_pfo->UserEnters(false, false);
+		p->SetTextColor(fore);
 		p->AppendText(msg);
 	}
 	m_marquee.AddItem(msg);
@@ -2242,8 +2298,9 @@ void CMainFrame::OnUserPart(LPCTSTR channel, LPCTSTR user, LPCTSTR msg)
 		p = GetActiveView();
 	p->SetTextColor(Colors::GREY);
 	p->AppendText(t);
+	CColor fore = m_pfo->UserLeaves(false, false);
+	p->SetTextColor(fore);
 	txt += _T(" leaves the channel: "); txt += channel; txt += ' '; txt += msg; txt += '\n';
-	p->SetTextColor(0x108800);
 	p->AppendText(txt);
 	m_marquee.AddItem(txt);
 	m_tv.DeleteItem(user, TRUE, TRUE);

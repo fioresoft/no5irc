@@ -1,6 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "resource.h"
+#include "IFontOptions.h"
 
 // bool to button state
 #ifndef BOOL2BST
@@ -51,6 +52,22 @@ public:
 		return 0;
 	}
 
+	int OnSetActive()
+	{
+		// 0 = allow activate
+		// -1 = go back that was active
+		// page ID = jump to page
+		//DoDataExchange(DDX_LOAD);
+		return 0;
+	}
+	BOOL OnKillActive()
+	{
+		// FALSE = allow deactivate
+		// TRUE = prevent deactivation
+		//DoDataExchange(DDX_SAVE);
+		return FALSE;
+	}
+
 	int OnApply()
 	{
 		DoDataExchange(DDX_SAVE);
@@ -67,6 +84,69 @@ public:
 		SetModified();
 		return 0;
 	}
+};
+
+
+class CFontOptionsDlgPage : public CPropertyPageImpl<CFontOptionsDlgPage>,
+	public CWinDataExchange<CFontOptionsDlgPage>
+{
+	typedef CPropertyPageImpl<CFontOptionsDlgPage> _baseClass;
+	IFontOptions* m_pfo;
+	CComboBox cb;
+	CNo5RichEdit m_edit;
+	IFontOptions* m_pFO;
+public:
+	//DECLARE_WND_CLASS(_T("NO5FontOptionsDlg"));
+public:
+	CFontOptionsDlgPage(IFontOptions *pfo):m_pFO(pfo),_baseClass(_T("font options"))
+	{
+		m_pfo = NULL;
+		CreateFontOptions(&m_pfo);
+		m_pFO->CopyTo(&m_pfo);
+	}
+	virtual ~CFontOptionsDlgPage()
+	{
+		DestroyFontOptions(&m_pfo);
+	}
+
+	enum { IDD = IDD_PROPPAGE_SMALL1 };
+
+	BEGIN_MSG_MAP(CFontOptionsDlgPage)
+		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+		COMMAND_CODE_HANDLER(BN_CLICKED,OnButtonClicked)
+		COMMAND_HANDLER(IDC_COMBO1,CBN_SELENDOK,OnComboOk)
+		CHAIN_MSG_MAP(_baseClass)
+	END_MSG_MAP()
+
+	BEGIN_DDX_MAP(CFontOptionsDlgPage)
+	END_DDX_MAP()
+
+	LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL& bHandled);
+
+	int OnSetActive()
+	{
+		// 0 = allow activate
+		// -1 = go back that was active
+		// page ID = jump to page
+		//DoDataExchange(DDX_LOAD);
+		return 0;
+	}
+	BOOL OnKillActive()
+	{
+		// FALSE = allow deactivate
+		// TRUE = prevent deactivation
+		//DoDataExchange(DDX_SAVE);
+		return FALSE;
+	}
+
+	int OnApply()
+	{
+		DoDataExchange(DDX_SAVE);
+		m_pfo->CopyTo(&m_pFO);
+		return PSNRET_NOERROR;
+	}
+	LRESULT OnComboOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnButtonClicked(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };
 
 
