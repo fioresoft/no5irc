@@ -1,2 +1,5 @@
 NO5 IRC was made by Fernando Fiore.
 All rights to https://Fioresoft.net
+/include/ includes Daniel Bowen's tabbing framework which may be found at codeproject
+/viksoe/ includeds selected WTL classes from https://www.viksoe.dk/
+This project uses libraries from OPENSSL project and restrictions may apply
