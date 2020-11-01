@@ -10,6 +10,7 @@
 #define IDR_MDICHILD                    129
 #define IDD_DIALOG1                     201
 #define IDD_DIALOG2                     204
+#define IDD_PROPPAGE_SMALL1             205
 #define IDI_ICON1                       206
 #define IDR_TOOLBAR1                    207
 #define IDB_BITMAP1                     208
@@ -52,7 +53,14 @@
 #define IDC_COMBO_FORE                  1017
 #define IDC_COMBO_BACK                  1018
 #define IDC_COMBO_SIZE                  1019
-#define IDC_TT_FORE						1020
+#define IDC_TT_FORE                     1020
+#define IDC_BUTTON1                     1020
+#define IDC_COMBO1                      1021
+#define IDC_BUTTON2                     1022
+#define IDC_BUTTON3                     1023
+#define IDC_BUTTON4                     1024
+#define IDC_BUTTON5                     1025
+#define IDC_RADIO1                      1030
 #define ID_EDIT_DECFONT                 32776
 #define ID_EDIT_INCFONT                 32777
 #define ID_USER_SENDVERSIONREQUEST      32778
@@ -88,9 +96,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        233
+#define _APS_NEXT_RESOURCE_VALUE        236
 #define _APS_NEXT_COMMAND_VALUE         32810
-#define _APS_NEXT_CONTROL_VALUE         1020
+#define _APS_NEXT_CONTROL_VALUE         1031
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
