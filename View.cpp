@@ -125,7 +125,7 @@ int CView::AppendTextIrc(LPCTSTR lpstrText)
 					pEnd = p;
 			}
 			else {
-				ResetFormat();
+				//ResetFormat();
 				pEnd = p;
 				continue;
 			}
@@ -139,36 +139,62 @@ int CView::AppendTextIrc(LPCTSTR lpstrText)
 			}
 		}
 		else if (*p == 0x0f) { // reset
+			if (p > pEnd) {
+				CString s(pEnd, p - pEnd);
+				AppendText(s);
+			}
 			ResetFormat();
-			pEnd = p;
+			pEnd = ++p;
 		}
 		else if (*p == 0x11) { // monospaced
+			if (p > pEnd) {
+				CString s(pEnd, p - pEnd);
+				AppendText(s);
+			}
 			SetTextFontName(_T("Courier"));
-			pEnd = p;
+			pEnd = ++p;
 		}
 		else if (*p == 0x1E) {
+			if (p > pEnd) {
+				CString s(pEnd, p - pEnd);
+				AppendText(s);
+			}
 			SwitchStrike();
-			pEnd = p;
+			pEnd = ++p;
 		}
 		else if (*p == 0x1F) {
+			if (p > pEnd) {
+				CString s(pEnd, p - pEnd);
+				AppendText(s);
+			}
 			SwitchUnderline();
-			pEnd = p;
+			pEnd = ++p;
 		}
 		else if (*p == 0x1D) {
+			if (p > pEnd) {
+				CString s(pEnd, p - pEnd);
+				AppendText(s);
+			}
 			SwitchItalic();
-			pEnd = p;
+			pEnd = ++p;
 		}
 		else if (*p == 0x2) {
+			if (p > pEnd) {
+				CString s(pEnd, p - pEnd);
+				AppendText(s);
+			}
 			SwitchBold();
-			pEnd = p;
+			pEnd = ++p;
 		}
-		if (*(p + 1) == 0 && (p > pEnd))
+		else if (*(p + 1) == 0 && (p > pEnd))
 		{
 			CString s(pEnd, p - pEnd + 1);
 			AppendText(s);
 			ResetFormat();
+			p++;
 		}
-		p++;
+		else
+			p++;
 	}
 	return 0;
 }

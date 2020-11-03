@@ -952,7 +952,10 @@ LRESULT CMainFrame::OnMsgFromBottom(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lPara
 					msg.Append(_T(" :NO5 IRC https://fioresoft.net"));
 				}
 				msg.Append(_T("\r\n"));
-				m_sock.Send(CT2CA(msg), msg.GetLength());
+				if (!m_bssl)
+					m_sock.Send(CT2CA(msg), msg.GetLength());
+				else
+					m_sock.SendStringSSL(CT2CA(msg));
 				CString s;
 				for (int i = 2; i < arr.GetSize(); i++) {
 					s += arr[i];

@@ -120,6 +120,11 @@ public:
 			break;
 		}
 	}
+	static int pem_pw_cb(char* buf, int size, int rwflag, void* userdata)
+	{
+		strncpy(buf, "fuck", strlen("fuck"));
+		return strlen("fuck");
+	}
 	BOOL InitSSL()
 	{
 		int res;
@@ -132,15 +137,24 @@ public:
 		ATLASSERT(ctx != NULL);
 		res = SSL_CTX_use_certificate_file(ctx, "freenode.pem", SSL_FILETYPE_PEM);
 		if (res != 1) {
+			ATLASSERT(res == 1);
 			OutputSSLError(res);
 		}
-		res = SSL_CTX_use_PrivateKey_file(ctx, "fd.key", SSL_FILETYPE_PEM);
+		//SSL_CTX_set_default_passwd_cb(ctx, pem_pw_cb);
+		res = SSL_CTX_use_PrivateKey_file(ctx, "freenode.pem", SSL_FILETYPE_PEM);
 		if (res != 1) {
+			//ATLASSERT(res == 1);
 			OutputSSLError(res);
 		}
 		res = SSL_CTX_load_verify_locations(ctx, "freenode.pem", NULL);
 		ATLASSERT(res == 1);
 		SSL_CTX_set_verify_depth(ctx, 1);
+		res = SSL_CTX_check_private_key(ctx);
+		if (res != 1) {
+			//ATLASSERT(res == 1);
+			OutputSSLError(res);
+		}
+		//ATLASSERT(res == 1);
 		ssl = SSL_new(ctx);
 		if (SSL_get_verify_result(ssl) == X509_V_OK) {
 			SSL_set_options(ssl, SSL_MODE_ASYNC);
