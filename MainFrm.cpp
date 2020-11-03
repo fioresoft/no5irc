@@ -1248,12 +1248,11 @@ void CMainFrame::OnLogin()
 			//res = m_sock.AsyncSelect(FD_READ | FD_WRITE | FD_CLOSE);
 			if (res) {
 #ifdef NO5_SSL
-				/*if (m_port.Get(true) != 6667) {
-					m_bssl = true;
-				}*/
 				if (m_bssl) {
 					res = m_sock.InitSSL();
 					CSocketAddress saddr;
+
+					m_bSendLogin = true;
 
 					res = saddr.Set(CT2CA(m_server), m_port);
 					if (res) {
@@ -1422,13 +1421,9 @@ void CMainFrame::OnSockRead(int error)
 	wsbuf.buf = buf;
 	//wsbuf.len = sizeof(buf) - 1;
 	wsbuf.len = sizeof(buf);
-#ifdef _DEBUG
-	/*static CWinFile wf;
 
-	if (!wf.IsHandleValid()) {
-		wf.Create(_T("debug.txt"), CREATE_ALWAYS,GENERIC_WRITE);
-	}*/
-#endif
+	static CWinFile wf;
+
 
 	if (error)
 		return;
@@ -1449,22 +1444,23 @@ void CMainFrame::OnSockRead(int error)
 			return;
 	}
 #endif
-	/*}
-	else {
-		Sleep(100);
-		return;
-	}*/
-	/*if (res == SOCKET_ERROR) {
-		OnSockError(res);
-		return;
-	}*/
+#ifdef _DEBUG
+	if (wf.IsHandleValid()) {
+		wf.CloseHandle();
+		wf.Create(_T("dump.txt"), CREATE_ALWAYS, GENERIC_WRITE);
+	}
 	if (buffer.GetDataLen() == 0) {
 		buffer.Reset();
 	}
+#endif
 	//buffer.Add<LPCSTR>(buf);
 	//buffer.Add<LPCTSTR>(CA2CTEX<4096>(buf));
 	// buffer.Add((LPBYTE)(LPCTSTR)CA2CTEX<4096>(buf, CP_UTF8), res * sizeof(TCHAR));
 	buffer.Add((LPBYTE)buf, res);
+#ifdef _DEBUG
+	if (wf.IsHandleValid())
+		wf.Write<char>(buffer);
+#endif
 	//buffer.AddNull();
 	ATLTRACE(_T("read %d\n"), res);
 	if (res == (sizeof(buf))) {
@@ -1472,15 +1468,17 @@ void CMainFrame::OnSockRead(int error)
 		//::Sleep(100);
 		return;
 	}
-#ifdef _DEBUG
-	//if(wf.IsHandleValid())
-	//	wf.Write(buffer);
-#endif
-	//int voids = buffer.ReplaceChars(0, '.');
+	else {
+		CStringA tmp = buf;
+		if (tmp.ReverseFind('\n') != tmp.GetLength() - 1) {
+			ATLTRACE(_T("returning, newline not found\n"));
+			return;
+		}
+	}
+	
 	buffer.AddNull();
-	//ATLTRACE("\n nulls = %d\n", voids);
 	buffer.Init("\r\n", true);
-	const int count = buffer.GetAll3(lines);
+	const int count = buffer.GetAll2(lines);
 	buffer.Reset();
 
 	for (int i = 0; i < count; i++) {
@@ -1497,6 +1495,7 @@ void CMainFrame::OnSockRead(int error)
 			server = params[0];
 			code = params[1];
 			if (code.Compare(_T("322")) == 0) {
+				//ATLASSERT(count2 >= 4);
 				if (count2 >= 4) {
 					nick = params[2];
 					channel = params[3];
@@ -1510,6 +1509,8 @@ void CMainFrame::OnSockRead(int error)
 					}
 					OnChannelList(channel, users, topic);
 				}
+				else
+					continue;
 			}
 			else if (code.Compare(_T("321")) == 0) {
 				OnBeginningOfList();
@@ -1694,10 +1695,10 @@ void CMainFrame::OnSockWrite(int error)
 {
 #ifdef NO5_SSL
 	if (m_bssl) {
-		static bool sendlogin = true;
 
-		if (sendlogin) {
-			sendlogin = false;
+		if (m_bSendLogin) {
+			m_bSendLogin = false;
+
 			if (!m_pass.IsEmpty()) {
 				//while (!m_sock.CanWrite());
 				SendPass(m_pass);
@@ -2543,7 +2544,7 @@ void CMainFrame::ListChannels()
 	if (!m_bssl)
 		res = m_sock.SendString(code);
 #ifdef NO5_SSL
-	else
+	else if(m_bssl)
 		res = m_sock.SendStringSSL(code);
 #endif
 }
