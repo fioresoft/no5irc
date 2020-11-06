@@ -314,7 +314,8 @@ class CMainFrame :
 	public CMessageFilter, public CIdleHandler,
 	public ISocketEvents,
 	public IIRCEvents,
-	public IIrc
+	public IIrc,
+	public IDCCChatEvents
 {
 	typedef CTabbedMDIFrameWindowImpl<CMainFrame, CMyTabbedMDIClient> _baseClass;
 	typedef CDotNetTabCtrl<CTabViewTabItem> _tabControl;
@@ -367,6 +368,7 @@ private:
 	CPointerArray<CFileSender> m_senders;
 	CPointerArray<CFileReceiver> m_receivers;
 	CFileTransferMonitor m_ftMonitor;
+	CSimpleMap<CString, IDCCChat*> m_Chats;
 	
 	//
 	void CreateTreeView();
@@ -578,4 +580,12 @@ public:
 	// DCC
 	void UserSendFile(LPCTSTR nick); // me sending a file to nick
 	void UserRecvFile(LPCTSTR nick,LPCTSTR tag);
+	void UserSendChat(LPCTSTR nick); // me requesting a chat with nick
+	void UserRecvChat(LPCTSTR nick, LPCTSTR tag);
+	void UserRecvChatClose(LPCTSTR nick, LPCTSTR tag);
+	void SendDCCMsg(LPCTSTR nick, LPCTSTR msg);
+	// IDCCChatEvents
+	virtual void OnLineRead(LPCTSTR nick, LPCTSTR line);
+	virtual void OnSockConnected(LPCTSTR nick,CSocketAddress &sa);
+	virtual void OnSockClose(LPCTSTR nick, LPCTSTR msg);
 };

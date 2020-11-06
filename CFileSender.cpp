@@ -238,3 +238,191 @@ void CFileReceiver::Abort()
 		m_ps->CloseSocket();
 	}
 }
+
+// CChatSender
+
+CChatSender::CChatSender(CMainFrame& frame, LPCTSTR nick, IDCCChatEvents* pSink) :m_frame(frame), m_nick(nick),
+	m_pSink(pSink)
+{
+	m_ps = new CMySocket(this);
+	BOOL res = m_ps->CreateSocket();
+	if (res) {
+		res = m_ps->BindToAny(CPort(0));
+		if (res) {
+			CSocketAddress local;
+			CSocketAddress local2;
+			res = m_frame.m_sock.GetLocalAddress(local2); // for the ip
+			ATLASSERT(res);
+			res = m_ps->GetLocalAddress(local); // for the port
+			local.Set(local2.GetIP(), local.GetPort());
+			if (res) {
+				SendCTCPRequest(local);
+				res = m_ps->Listen(2);
+				if (res) {
+					res = m_ps->AsyncSelect(FD_ACCEPT);
+				}
+			}
+		}
+	}
+}
+
+CChatSender::~CChatSender()
+{
+	delete m_ps;
+}
+BOOL CChatSender::SendCTCPRequest(CSocketAddress& sa)
+{
+	CString s;
+	s.Format(_T("\001DCC CHAT chat %u %u\001"), sa.GetIP().Get(true), sa.GetPort().Get(true));
+	m_frame.SendPrivateMsg(m_nick, s);
+	return TRUE;
+}
+
+BOOL CChatSender::SendCTCPClose()
+{
+	CString s(_T("\001DCC CLOSE\001"));
+	m_frame.SendPrivateMsg(m_nick, s);
+	return TRUE;
+}
+
+void CChatSender::OnSockAccept(int error)
+{
+	CSocketAddress sa;
+	BOOL res;
+	int check = 0;
+	
+	if (error)
+		return;
+	res = TRUE;
+	SOCKET s;
+	if (res) {
+		s = m_ps->Accept(sa);
+		res = s != INVALID_SOCKET;
+		ATLASSERT(res);
+		res = m_ps->CloseSocket();
+		ATLASSERT(res);
+		res = m_ps->AttachAcceptedSocket(s);
+		if (res) {
+			m_pSink->OnSockConnected(m_nick, sa);
+			res = m_ps->AsyncSelect(FD_READ | FD_WRITE | FD_CLOSE);
+			ATLASSERT(res);
+		}
+	}
+	ATLASSERT(res);
+}
+
+void CChatSender::OnSockRead(int error)
+{
+	const int len = 1024;
+	char buf[len] = { 0 };
+	int read = m_ps->Recv(buf, len - 1);
+
+	if (read != SOCKET_ERROR) {
+		if (buf[read - 1] == '\n') {
+			m_pSink->OnLineRead(m_nick,CA2CTEX<>(buf,CP_UTF8));
+		}
+	}
+}
+
+void CChatSender::OnSockClose(int error)
+{
+	CString desc = _T("socket closed: ");
+	desc += m_ps->GetErrorDesc(error);
+	m_pSink->OnSockClose(m_nick,desc);
+}
+
+void CChatSender::SendLine(LPCTSTR msg)
+{
+	CString _msg = msg;
+
+	_msg = _msg.TrimRight();
+	_msg += '\n';
+	if (m_ps->IsHandleValid()) {
+		m_ps->SendString(CT2CA(_msg));
+	}
+}
+
+void CChatSender::Close()
+{
+	SendCTCPClose();
+	m_ps->CloseSocket();
+}
+
+// CChatReceiver
+
+CChatReceiver::CChatReceiver(CMainFrame& frame, LPCTSTR nick, CSocketAddress& sa, IDCCChatEvents* pSink) :\
+	m_frame(frame), m_nick(nick), m_sa(sa),m_pSink(pSink)
+{
+	m_ps = new CMySocket(this);
+	BOOL res = m_ps->CreateSocket();
+
+	if (res) {
+		res = m_ps->AsyncSelect(FD_READ | FD_WRITE | FD_CONNECT | FD_CLOSE);
+		if (res) {
+			res = m_ps->Connect(&m_sa);
+		}
+	}
+	ATLASSERT(res);
+}
+
+CChatReceiver::~CChatReceiver()
+{
+	delete m_ps;
+}
+
+BOOL CChatReceiver::SendCTCPClose()
+{
+	CString s(_T("\001DCC CLOSE\001"));
+	m_frame.SendPrivateMsg(m_nick, s);
+	return TRUE;
+}
+
+void CChatReceiver::OnSockRead(int error)
+{
+	int read;
+	const int len = 1024;
+	char buf[len] = { 0 };
+	if (m_ps->IsHandleValid())
+		read = m_ps->Recv(buf, len);
+	else
+		read = 0;
+	if (read > 0) {
+		if (buf[read - 1] == '\n') {
+			m_pSink->OnLineRead(m_nick,CA2CTEX<>(buf, CP_UTF8));
+		}
+	}
+}
+void CChatReceiver::OnSockWrite(int error)
+{
+	ATLTRACE(_T("OnSockWrite: %d\n"), error);
+}
+
+void CChatReceiver::OnSockConnect(int error)
+{
+	if(!error)
+		m_pSink->OnSockConnected(m_nick,m_sa);
+}
+
+void CChatReceiver::OnSockClose(int error)
+{
+	CString desc = _T("socket closed: ");
+	desc += m_ps->GetErrorDesc(error);
+	m_pSink->OnSockClose(m_nick, desc);
+}
+
+void CChatReceiver::SendLine(LPCTSTR msg)
+{
+	CString _msg = msg;
+
+	_msg = _msg.TrimRight();
+	_msg += '\n';
+	if (m_ps->IsHandleValid()) {
+		m_ps->SendString(CT2CA(_msg));
+	}
+}
+
+void CChatReceiver::Close()
+{
+	SendCTCPClose();
+	m_ps->CloseSocket();
+}

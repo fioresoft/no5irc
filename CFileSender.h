@@ -3,6 +3,19 @@
 class CMainFrame;
 class CMySocket;
 
+struct IDCCChatEvents
+{
+	virtual void OnLineRead(LPCTSTR nick,LPCTSTR line) = 0;
+	virtual void OnSockConnected(LPCTSTR nick,CSocketAddress &sa) = 0;
+	virtual void OnSockClose(LPCTSTR nick,LPCTSTR msg) = 0;
+};
+
+struct IDCCChat
+{
+	virtual void SendLine(LPCTSTR line) = 0;
+	virtual void Close() = 0;
+};
+
 struct IFileTransferEvents
 {
 	virtual void OnInit(LPCTSTR file, LPCTSTR nick, u_long filesize) = 0;
@@ -87,3 +100,58 @@ public:
 	virtual void Abort();
 };
 
+class CChatSender : public ISocketEvents,public IDCCChat
+{
+	CMainFrame& m_frame;
+	CMySocket* m_ps;
+	CString m_nick;
+	IDCCChatEvents* m_pSink;
+	BOOL SendCTCPRequest(CSocketAddress& sa);
+	BOOL SendCTCPClose();
+public:
+	CChatSender(CMainFrame& frame, LPCTSTR nick, IDCCChatEvents* pSink);
+	virtual ~CChatSender();
+public:
+	virtual void OnSockError(int error) {};
+	virtual void OnSockRead(int error);
+	virtual void OnSockWrite(int error) {};
+	virtual void OnSockConnect(int error) {}
+	virtual void OnSockClose(int error);
+	virtual void OnSockAccept(int error);
+	virtual void OnSockOutOfBand(int error) {}
+	virtual void OnSockConnecting(void) {}
+	virtual void OnSockConnectTimeout(void) {}
+	virtual void OnSockResolvingAddress(void) {}
+	virtual void OnSockAddressResolved(int error) {}
+	//
+	virtual void SendLine(LPCTSTR msg);
+	virtual void Close();
+};
+
+class CChatReceiver : public ISocketEvents, public IDCCChat
+{
+	CMainFrame& m_frame;
+	CMySocket* m_ps;
+	CString m_nick;
+	IDCCChatEvents* m_pSink;
+	CSocketAddress m_sa;
+	BOOL SendCTCPClose();
+public:
+	CChatReceiver(CMainFrame& frame, LPCTSTR nick, CSocketAddress &sa,IDCCChatEvents* pSink);
+	virtual ~CChatReceiver();
+public:
+	virtual void OnSockError(int error) {}
+	virtual void OnSockRead(int error);
+	virtual void OnSockWrite(int error);
+	virtual void OnSockConnect(int error);
+	virtual void OnSockClose(int error);
+	virtual void OnSockAccept(int error) {}
+	virtual void OnSockOutOfBand(int error) {}
+	virtual void OnSockConnecting(void) {}
+	virtual void OnSockConnectTimeout(void) {}
+	virtual void OnSockResolvingAddress(void) {}
+	virtual void OnSockAddressResolved(int error) {}
+	//
+	virtual void SendLine(LPCTSTR msg);
+	virtual void Close();
+};

@@ -177,11 +177,11 @@ LRESULT CMainFrame::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 	return 1;
 }
 
-LRESULT CMainFrame::OnChildDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+LRESULT CMainFrame::OnChildDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
 	BOOL bClose = TRUE;
 
-	ViewData* p = GetViewData();
+	ViewData* p = (ViewData*)lParam;
 	if (p->type == VIEW_CHANNEL) {
 		if (m_sock.IsConnected()) {
 			if (m_bInChannel && p->name[0] == '#') {
@@ -190,6 +190,12 @@ LRESULT CMainFrame::OnChildDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lP
 				// deletes the channel tree node
 				m_tv.DeleteItem(p->name, TRUE, TRUE);
 			}
+		}
+	}
+	else if (p->type == ViewType::VIEW_DCCCHAT) {
+		IDCCChat* pChat = m_Chats.GetValueAt(m_Chats.FindKey(p->name));
+		if (pChat) {
+			pChat->Close();
 		}
 	}
 	if (p->type == VIEW_SERVER && m_sock.IsConnected()) {
@@ -709,6 +715,9 @@ LRESULT CMainFrame::OnTVRightClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled)
 				case ID_USER_SENDFILE:
 					UserSendFile(name);
 					break;
+				case ID_USER_CHAT:
+					UserSendChat(name);
+					break;
 				default:
 					break;
 			}
@@ -988,10 +997,13 @@ LRESULT CMainFrame::OnMsgFromBottom(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lPara
 			else {
 				ViewData* p = GetViewData();
 				m_bInChannel = p->type == ViewType::VIEW_CHANNEL; // TODO: hack because something was changing m_bInChannel to true. Find it!
-				if (!m_bInChannel) {
+				if (p->type == ViewType::VIEW_DCCCHAT) {
+					SendDCCMsg(p->name, msg);
+				}
+				else if (p->type == ViewType::VIEW_PVT) {
 					//ViewData* p = GetViewData();
 					//CView* pView = CreatePrivateChannel(p->name);
-
+					ATLASSERT(p->type == ViewType::VIEW_PVT);
 					SendPrivateMsg(p->name, msg);
 					OnPrivateMsg(m_nick, msg);
 				}
@@ -2196,6 +2208,12 @@ void CMainFrame::OnPrivateMsg(LPCTSTR from, LPCTSTR msg)
 			else if (!tag.Find(_T("DCC SEND"))) {
 				UserRecvFile(from, tag);
 			}
+			else if (!tag.Find(_T("DCC CHAT"))) {
+				UserRecvChat(from, tag);
+			}
+			else if (!tag.Find(_T("DCC CLOSE"))) {
+				UserRecvChatClose(from, tag);
+			}
 			else {
 				ATLTRACE(_T("Unknown CTCP tag from %s - %s\n"), from, tag);
 			}
@@ -2892,6 +2910,156 @@ void CMainFrame::UserRecvFile(LPCTSTR nick,LPCTSTR tag)
 				}
 			}
 		}
+	}
+}
+
+void CMainFrame::UserSendChat(LPCTSTR nick)
+{
+	CString _nick = nick;
+	CChatSender* pcs = new CChatSender(*this, nick, this); // TODO object not deleted
+	m_Chats.Add(_nick, pcs);
+	CreateView(nick, ViewType::VIEW_DCCCHAT);
+}
+
+void CMainFrame::UserRecvChat(LPCTSTR nick, LPCTSTR tag)
+{
+	CStringToken st;
+	CString next;
+
+	st.Init(tag, _T(" "), true);
+	next = st.GetNext2();
+	if (!next.Compare(_T("DCC"))) {
+		next = st.GetNext2();
+		if (!next.Compare(_T("CHAT"))) {
+			CString param;
+
+			param = st.GetNext2();
+			if (!param.CompareNoCase(_T("chat"))) {
+				CString sip = st.GetNext2();
+				if (!sip.IsEmpty()) {
+					CString sport = st.GetNext2();
+
+					if (!sport.IsEmpty()) {
+						u_long ulip = _wtoll(sip);
+						u_short usport = _wtoi(sport);
+
+						if (ulip && usport /*&& ulsize*/) {
+							CIPAddress ip;
+							CComputerAddress ca;
+							CPort port(usport, true);
+
+							ip.Set(ulip, true);
+							BOOL res = ca.GetHostByAddr(ip);
+							if (res) {
+								sip = ca.GetName();
+							}
+							else {
+								sip = ip.ToString();
+							}
+							CString msg;
+							msg.Format(_T("%s wants to open a chat \nFrom: %s "), nick, (LPCTSTR)sip);
+							int yes = MessageBox(msg, _T("NO5 IRC"), MB_YESNO);
+							if (yes == IDYES) {
+								CSocketAddress sa;
+								CreateView(nick, ViewType::VIEW_DCCCHAT);
+								sa.Set(ip, port);
+								CChatReceiver* pcr = new CChatReceiver(*this,nick,sa,this); // TODO object not deleted
+								CString _nick = nick;
+								m_Chats.Add(_nick, pcr);
+							}
+							//}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void CMainFrame::UserRecvChatClose(LPCTSTR nick, LPCTSTR tag)
+{
+	CString _nick = nick;
+	IDCCChat* pc = m_Chats.GetValueAt(m_Chats.FindKey(_nick));
+	if (pc) {
+		pc->Close();
+	}
+}
+
+void CMainFrame::OnLineRead(LPCTSTR nick, LPCTSTR line)
+{
+	CView *p = GetViewByName(nick);
+	ViewData *data = GetViewDataByName(nick);
+
+	if (data->type == ViewType::VIEW_DCCCHAT) {
+		CString t = GetTimeString();
+		CColor fore, back;
+
+		p->SetTextColor(Colors::GREY);
+		p->AppendText(t);
+		m_pfo->GetUserName(fore, back);
+		p->SetTextBkColor(back);
+		p->SetTextColor(fore);
+		t = nick;
+		t += ':';
+		p->AppendText(t);
+		m_pfo->GetUserText(fore, back);
+		p->SetTextBkColor(back);
+		p->SetTextColor(fore);
+		p->AppendTextIrc(line);
+	}
+}
+
+void CMainFrame::SendDCCMsg(LPCTSTR nick, LPCTSTR msg)
+{
+	CView* p = GetViewByName(nick);
+	ViewData* data = GetViewDataByName(nick);
+	CString _nick = nick;
+
+	if (data->type == ViewType::VIEW_DCCCHAT) {
+		IDCCChat* pc = m_Chats.GetValueAt(m_Chats.FindKey(_nick));
+		if (pc) {
+			pc->SendLine(msg);
+			CString t = GetTimeString();
+			CColor fore, back;
+
+			p->SetTextColor(Colors::GREY);
+			p->AppendText(t);
+			fore = m_pfo->MeFore(false, false);
+			back = m_pfo->MeBack(false, false);
+			p->SetTextBkColor(back);
+			p->SetTextColor(fore);
+			t = m_nick;
+			t += ':';
+			p->AppendText(t);
+			fore = m_pfo->MyTextFore(false, false);
+			back = m_pfo->MyTextBack(false, false);
+			p->SetTextBkColor(back);
+			p->SetTextColor(fore);
+			p->AppendTextIrc(msg);
+		}
+	}
+}
+void CMainFrame::OnSockConnected(LPCTSTR nick,CSocketAddress &sa)
+{
+	CView* p = GetViewByName(nick);
+	ViewData* data = GetViewDataByName(nick);
+
+	if (data->type == ViewType::VIEW_DCCCHAT) {
+		CString str = _T("connected to: ");
+		str += sa.ToString();
+		str += '\n';
+		p->AppendText(str);
+	}
+}
+void CMainFrame::OnSockClose(LPCTSTR nick, LPCTSTR msg)
+{
+	CView* p = GetViewByName(nick);
+	ViewData* data = GetViewDataByName(nick);
+	CString _msg = msg;
+	msg += '\n';
+
+	if (data && data->type == ViewType::VIEW_DCCCHAT) {
+		p->AppendText(_msg);
 	}
 }
 
