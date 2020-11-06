@@ -9,6 +9,8 @@
 #include "usermsgs.h"
 #include "View.h"
 #include "IFontOptions.h"
+#include "CFileSender.h"
+#include "CFileTransferMonitor.h"
 #ifdef NO5_SSL
 #include "openssl/ssl.h"
 #include "openssl/ssl3.h"
@@ -342,7 +344,6 @@ private:
 	CListViewCtrl m_lv;
 	CMarqueeWnd m_marquee;
 	CChannelsViewFrame m_ChannelsView;
-	CMySocket m_sock;
 	CString m_server;
 	CPort m_port;
 	CString m_nick;
@@ -360,8 +361,12 @@ private:
 	BOOL m_bAllowCTCP; // answer CTCP queries?
 	CString m_userinfo;
 	MarqueeOptions mo;
-	bool m_bssl;
 	IFontOptions* m_pfo;
+	bool m_bSendLogin;
+	bool m_bssl;
+	CPointerArray<CFileSender> m_senders;
+	CPointerArray<CFileReceiver> m_receivers;
+	CFileTransferMonitor m_ftMonitor;
 	
 	//
 	void CreateTreeView();
@@ -377,6 +382,7 @@ private:
 	CString GetTimeString() const;
 public:
 	bool m_bDarkMode;
+	CMySocket m_sock;
 	//
 	ViewData* GetViewData();
 	CView* GetActiveView();
@@ -405,6 +411,7 @@ public:
 		m_bAllowCTCP = FALSE;
 		m_bDarkMode = false;
 		m_bssl = false;
+		m_bSendLogin = TRUE;
 		//
 		//m_CmdBar.m_hIconChildMaximized = LoadIcon(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
 	}
@@ -503,6 +510,7 @@ public:
 	LRESULT OnColumnClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled);
 	LRESULT OnTVRightClick(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
 	LRESULT OnTVGetInfoTip(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
+	LRESULT OnLVFileTransfersRightClick(int, LPNMHDR pnmh, BOOL&);
 
 	//
 	virtual void OnSockError(int error);
@@ -567,4 +575,7 @@ public:
 	virtual void WhoIs(LPCTSTR nick);
 	virtual void Who(LPCTSTR nick);
 	virtual void WhoWas(LPCTSTR nick);
+	// DCC
+	void UserSendFile(LPCTSTR nick); // me sending a file to nick
+	void UserRecvFile(LPCTSTR nick,LPCTSTR tag);
 };

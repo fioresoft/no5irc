@@ -76,10 +76,61 @@ public:
 	}
 };
 
-class CBottom : public CFrameWindowImpl<CBottom>,
+template <class TTabCtrl = CDotNetTabCtrl<CTabViewTabItem> >
+class CFrameTabbedChildWindow :
+	public CTabbedFrameImpl<CFrameTabbedChildWindow<TTabCtrl>, TTabCtrl, CFrameWindowImpl<CFrameTabbedChildWindow<TTabCtrl>, ATL::CWindow,
+	TabbedChildWindowWinTraits> >
+{
+protected:
+	typedef CFrameTabbedChildWindow<TTabCtrl> thisClass;
+	typedef CTabbedFrameImpl<CFrameTabbedChildWindow<TTabCtrl>, TTabCtrl, CFrameWindowImpl<CFrameTabbedChildWindow<TTabCtrl>, ATL::CWindow,
+		TabbedChildWindowWinTraits> > baseClass;
+
+	// Constructors
+public:
+	CFrameTabbedChildWindow(bool bReflectNotifications = false) :
+		baseClass(bReflectNotifications)
+	{
+	}
+
+	// Message Handling
+public:
+	DECLARE_FRAME_WND_CLASS_EX(_T("FrameTabbedChildWindow"), 0, 0, COLOR_APPWORKSPACE)
+
+	BOOL PreTranslateMessage(MSG* pMsg)
+	{
+		//if(baseClass::PreTranslateMessage(pMsg))
+		//	return TRUE;
+
+		//return m_view.PreTranslateMessage(pMsg);
+
+		HWND hWndFocus = ::GetFocus();
+		if (m_hWndActive != NULL && ::IsWindow(m_hWndActive) &&
+			(m_hWndActive == hWndFocus || ::IsChild(m_hWndActive, hWndFocus)))
+		{
+			//active.PreTranslateMessage(pMsg);
+			if (::SendMessage(m_hWndActive, WM_FORWARDMSG, 0, (LPARAM)pMsg))
+			{
+				return TRUE;
+			}
+		}
+
+		return FALSE;
+	}
+
+
+	BEGIN_MSG_MAP(thisClass)
+		CHAIN_MSG_MAP(baseClass)
+	END_MSG_MAP()
+};
+
+
+class CBottom : \
+	public CFrameTabbedChildWindow<CDotNetTabCtrl<CTabViewTabItem>>,
 	public CUpdateUI<CBottom>,
 	public CMessageFilter, public CIdleHandler
 {
+	typedef CFrameTabbedChildWindow<CDotNetTabCtrl<CTabViewTabItem>> _baseClass;
 public:
 	CMainFrame &m_frame;
 	CStatusBarCtrl m_status;
@@ -115,8 +166,10 @@ public:
 		COMMAND_ID_HANDLER(ID_EDIT_UNDERLINE, OnUnderline)
 		COMMAND_HANDLER(IDC_COMBO_FORE, CBN_SELENDOK, OnForeSelChange)
 		COMMAND_HANDLER(IDC_COMBO_BACK, CBN_SELENDOK, OnBackSelChange)
+		NOTIFY_CODE_HANDLER(CTCN_SELCHANGE, OnSelChange)
 		NOTIFY_CODE_HANDLER(TTN_SHOW,OnShowTT)
 		NOTIFY_HANDLER(IDC_TT_FORE,TTN_GETDISPINFO,OnGetDispInfo)
+		NOTIFY_HANDLER(IDC_LV_TRANSFERS,NM_RCLICK,OnLVTransfersRightClick)
 		CHAIN_COMMANDS_MEMBER_ID_RANGE(m_client, ID_EDIT_CLEAR, ID_EDIT_FIND_PREVIOUS)
 		//CHAIN_CLIENT_COMMANDS()
 		REFLECT_NOTIFICATIONS_MSG_FILTERED(WM_DRAWITEM)
@@ -124,7 +177,7 @@ public:
 		REFLECT_NOTIFICATIONS_MSG_FILTERED(WM_COMPAREITEM)
 		REFLECT_NOTIFICATIONS_MSG_FILTERED(WM_DELETEITEM)
 		//FORWARD_NOTIFICATIONS()
-		CHAIN_MSG_MAP(CFrameWindowImpl<CBottom>)
+		CHAIN_MSG_MAP(_baseClass)
 	END_MSG_MAP()
 
 	void CreateClient();
@@ -162,6 +215,8 @@ public:
 		//m_tt.Popup();
 		return 0;
 	}
+	LRESULT OnSelChange(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled);
+	LRESULT OnLVTransfersRightClick(int idCtrl, LPNMHDR pnmh, BOOL& bHandled);
 	int GetDesiredHeight();
 	
 };

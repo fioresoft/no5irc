@@ -11,6 +11,7 @@
 #include "MainFrm.h"
 #include "usermsgs.h"
 #include "COptionsDlg.h"
+#include "CFileSender.h"
 #define IDC_BAND_MARQUEE	100
 
 
@@ -110,8 +111,9 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	m_tab.Create(m_vsplitter, 0, 0, WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0);
 
 	// botttom
-	m_bottom.Create(m_splitter,rcDefault,(LPCTSTR)0,WS_CHILD|WS_VISIBLE|WS_CLIPCHILDREN);
+	m_bottom.Create(m_splitter,rcDefault,(LPCTSTR)0,0);
 	m_bottom.m_status = m_hWndStatusBar;
+	m_bottom.AddTab(m_ftMonitor.CreateListView(m_bottom),_T("Transfers"));
 	if (m_bDarkMode) {
 		m_bottom.m_client.SetTextBkColor(0);
 		m_bottom.m_client.SetTextColor(0xffffff);
@@ -704,6 +706,9 @@ LRESULT CMainFrame::OnTVRightClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled)
 				case ID_USER_WHO:
 					Who(name);
 					break;
+				case ID_USER_SENDFILE:
+					UserSendFile(name);
+					break;
 				default:
 					break;
 			}
@@ -814,7 +819,7 @@ void CMainFrame::CreateListView()
 	LVCOLUMN col = { 0 };
 	CClientDC dc(m_hWnd);
 	CSize sz;
-	LVITEM item = { 0 };
+
 	//m_lv.SetFont(m_font);
 	dc.GetTextExtent(_T("  CHANNEL    "), strlen("  CHANNEL  "), &sz);
 	m_lv.InsertColumn(0, _T("channel"), LVCFMT_LEFT, sz.cx);
@@ -1022,6 +1027,39 @@ LRESULT CMainFrame::OnDecFont(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl
 		LONG s = p->GetTextHeight(FALSE);
 		s -= 5;
 		p->SetTextHeight(s, SCF_ALL);
+	}
+	return 0;
+}
+
+LRESULT CMainFrame::OnLVFileTransfersRightClick(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
+{
+	// TODO do something
+	LVHITTESTINFO ht = { 0 };
+	CPoint pt;
+	CString nick;
+	
+	GetCursorPos(&pt);
+	::ScreenToClient(m_ftMonitor.m_lv, &pt);
+	ht.pt = pt;
+	int index = m_ftMonitor.m_lv.HitTestEx(&ht);
+	if (index >= 0) {
+		m_ftMonitor.m_lv.GetItemText(ht.iItem, 0, nick);
+		CString msg;
+
+		msg = (_T("Abort connections?"));
+		int res = MessageBox(msg,_T("NO5 IRC"),MB_YESNO);
+		if (res == IDYES) {
+			for (int i = 0; i < m_senders.GetSize(); i++) {
+				m_senders[i]->Abort();
+			}
+			for (int i = 0; i < m_receivers.GetSize(); i++) {
+				m_receivers[i]->Abort();
+			}
+			m_senders.RemoveAll();
+			m_receivers.RemoveAll();
+			m_ftMonitor.m_lv.DeleteAllItems();
+			m_ftMonitor.m_transfers.RemoveAll();
+		}
 	}
 	return 0;
 }
@@ -2155,6 +2193,12 @@ void CMainFrame::OnPrivateMsg(LPCTSTR from, LPCTSTR msg)
 			else if (!tag.Compare(_T("TIME"))) {
 				AnswerTimeRequest(from);
 			}
+			else if (!tag.Find(_T("DCC SEND"))) {
+				UserRecvFile(from, tag);
+			}
+			else {
+				ATLTRACE(_T("Unknown CTCP tag from %s - %s\n"), from, tag);
+			}
 	}
 	else {
 			CView* p;
@@ -2767,6 +2811,88 @@ CString CMainFrame::GetTimeString() const
 	memset(buf, 0, 100);
 	_tcsftime(buf, 100, _T("[%T] "), &tm);
 	return s;
+}
+
+void CMainFrame::UserSendFile(LPCTSTR nick) 
+{
+	CFileDialog dlg(TRUE, NULL, NULL,  OFN_NOCHANGEDIR | OFN_NONETWORKBUTTON | OFN_EXPLORER| OFN_HIDEREADONLY,
+		_T("All files\0*.*\0\0\0"),m_hWnd);
+	if (IDOK == dlg.DoModal()) {
+		CWinFile wf;
+		CString file;
+		CPath path(dlg.m_szFileName);
+		CFileSender* pfs = new CFileSender(*this, path, nick, m_ftMonitor.GetNewFileTransfer());
+		m_senders.Add(pfs);
+	}
+}
+
+void CMainFrame::UserRecvFile(LPCTSTR nick,LPCTSTR tag)
+{
+	CStringToken st;
+	CString next;
+
+	st.Init(tag, _T(" "), true);
+	next = st.GetNext2();
+	if (!next.Compare(_T("DCC"))) {
+		next = st.GetNext2();
+		if (!next.Compare(_T("SEND"))) {
+			CString file;
+
+			file = st.GetNext2();
+			if (!file.IsEmpty()) {
+				CString sip = st.GetNext2();
+				if (!sip.IsEmpty()) {
+					CString sport = st.GetNext2();
+
+					if (!sport.IsEmpty()) {
+						CString ssize = st.GetNext2();
+						//if (!ssize.IsEmpty()) {
+							u_long ulip = _wtoll(sip);
+							u_short usport = _wtoi(sport);
+							u_long ulsize = _wtoll(ssize);
+
+							if (ulip && usport /*&& ulsize*/) {
+								CIPAddress ip;
+								CComputerAddress ca;
+								CPort port(usport, true);
+
+								ip.Set(ulip, true);
+								BOOL res = ca.GetHostByAddr(ip);
+								if (res) {
+									sip = ca.GetName();
+								}
+								else {
+									sip = ip.ToString();
+								}
+								CString msg;
+								msg.Format(_T("%s wants to send you file %s\nFrom: %s size %u bytes"), nick, (LPCTSTR)file, (LPCTSTR)sip,
+									ulsize);
+								int yes = MessageBox(msg, _T("NO5 IRC"), MB_YESNO);
+								if (yes == IDYES) {
+									// receive the file
+									CPath path;
+
+									path.SetPath(file, FALSE, FALSE);
+									CFileDialog dlg(FALSE, NULL, path, OFN_NOCHANGEDIR | OFN_NONETWORKBUTTON | OFN_EXPLORER | \
+										OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,_T("All files\0*.*\0\0\0"), m_hWnd);
+
+									res = dlg.DoModal(m_hWnd);
+									if (res == IDOK) {
+										CSocketAddress sa;
+
+										sa.Set(ip, port);
+										path.SetPath(dlg.m_szFileName, FALSE, FALSE);
+										CFileReceiver* pfr = new CFileReceiver(*this, path, nick, sa, ulsize, m_ftMonitor.GetNewFileTransfer());
+										m_receivers.Add(pfr);
+									}
+								}
+							//}
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 // CChannelsViewFrame

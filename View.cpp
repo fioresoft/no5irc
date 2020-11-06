@@ -223,11 +223,12 @@ LRESULT CView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOO
 	return 0;
 }
 //
+// CBottom
 
 void CBottom::CreateClient()
 {
-	m_client.Create(m_hWnd, rcDefault, 0, WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | ES_SUNKEN, WS_EX_CLIENTEDGE,
-		IDR_BOTTOM_FRAME);
+	m_client.Create(m_hWnd, rcDefault, 0, WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | ES_SUNKEN, WS_EX_CLIENTEDGE);
+	AddTab(m_client,_T("input"));
 }
 
 void CBottom::CreateToolBar()
@@ -245,8 +246,9 @@ void CBottom::CreateToolBar()
 	
 }
 
-LRESULT CBottom::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+LRESULT CBottom::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
+	_baseClass::OnCreate(uMsg, wParam, lParam, bHandled);
 	CreateToolBar();
 	CreateComboFonts();
 	CreateComboSize();
@@ -452,6 +454,31 @@ LRESULT CBottom::OnBackSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWnd
 	return 0;
 }
 
+LRESULT CBottom::OnSelChange(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled)
+{
+	NMCTC2ITEMS* pData = (NMCTC2ITEMS*)pnmh;
+	CReBarCtrl rebar = m_hWndToolBar;
+	int nBandIndex = 0;// rebar.IdToIndex(IDR_BOTTOM_FRAME);	// toolbar is 2nd added band
+
+	if (pData->iItem2 == 1) {
+		rebar.ShowBand(nBandIndex, FALSE);
+		UISetCheck(ID_VIEW_TOOLBAR, FALSE);
+		UpdateLayout();
+	}
+	else if (pData->iItem2 == 0) {
+		rebar.ShowBand(nBandIndex, TRUE);
+		UISetCheck(ID_VIEW_TOOLBAR, TRUE);
+		UpdateLayout();
+	}
+	bHandled = FALSE;
+	return 0;
+}
+
+LRESULT CBottom::OnLVTransfersRightClick(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
+{
+	return m_frame.OnLVFileTransfersRightClick(idCtrl, pnmh, bHandled);
+}
+
 int CBottom::GetDesiredHeight()
 {
 	CReBarCtrl rb = m_hWndToolBar;
@@ -468,14 +495,7 @@ int CBottom::GetDesiredHeight()
 	return h;
 }
 
-/// <summary>
-/// 
-/// </summary>
-/// <param name=""></param>
-/// <param name="wParam"></param>
-/// <param name=""></param>
-/// <param name="bHandled"></param>
-/// <returns></returns>
+// CBottomClient
 
 LRESULT CBottomClient::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
 {
