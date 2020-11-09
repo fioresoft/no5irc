@@ -460,7 +460,7 @@ LRESULT CBottom::OnSelChange(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled)
 	CReBarCtrl rebar = m_hWndToolBar;
 	int nBandIndex = 0;// rebar.IdToIndex(IDR_BOTTOM_FRAME);	// toolbar is 2nd added band
 
-	if (pData->iItem2 == 1) {
+	if (pData->iItem2 == 1 || pData->iItem2 == 2) {
 		rebar.ShowBand(nBandIndex, FALSE);
 		UISetCheck(ID_VIEW_TOOLBAR, FALSE);
 		UpdateLayout();

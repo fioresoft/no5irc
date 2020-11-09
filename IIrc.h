@@ -19,6 +19,7 @@ struct IIrc
 	virtual void RequestUserinfo(LPCTSTR from) = 0;
 	virtual void RequestPing(LPCTSTR from) = 0;
 	virtual void RequestTime(LPCTSTR from) = 0;
+	virtual void SendAction(LPCTSTR channel,LPCTSTR msg) = 0;
 	virtual void AnswerVersionRequest(LPCTSTR from) = 0;
 	virtual void AnswerUserinfoRequest(LPCTSTR from) = 0;
 	virtual void AnswerPingRequest(LPCTSTR from) = 0;
@@ -26,5 +27,8 @@ struct IIrc
 	virtual void WhoIs(LPCTSTR nick) = 0;
 	virtual void Who(LPCTSTR nick) = 0;
 	virtual void WhoWas(LPCTSTR nick) = 0;
+	virtual void Output(LPCTSTR msg) = 0; // outputs text to output tab. not related to IRC but whatever
+	virtual long SetTimer(long id,long ms) = 0; // to disable id == id ms == 0, return id
+	virtual CString GetActiveViewName() = 0;
 };
 

@@ -1,0 +1,81 @@
+// MyServer.idl : IDL source for MyServer.exe
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (MyServer.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	object,
+	uuid(9effb178-8880-434d-ac19-e74f32b375b1),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface INo5IrcObj : IDispatch
+{
+	[id(1)] HRESULT SendActiveChannelMsg([in] BSTR msg);
+	[id(2)] HRESULT SendChannelMsg([in] BSTR channel, [in] BSTR msg);
+	[id(3)] HRESULT SendPrivateMsg([in] BSTR to, [in] BSTR msg);
+	[id(4)] HRESULT SendNoticeMsg([in] BSTR to, [in] BSTR msg);
+	[id(5)] HRESULT JoinChannel([in] BSTR channel);
+	[id(6)] HRESULT LeaveChannel([in] BSTR channel,[in] BSTR msg);
+	[id(7)] HRESULT Quit([in] BSTR msg);
+	[id(8)] HRESULT SendPass([in] BSTR pw);
+	[id(9)] HRESULT SendNick([in] BSTR nick);
+	[id(10)] HRESULT SendUser([in] BSTR user,[in] BSTR name);
+	[id(11)] HRESULT ListChannels();
+	[id(12)] HRESULT ListChannelNames([in] BSTR channel);
+	[id(13)] HRESULT GetTopic([in] BSTR channel);
+	[id(14)] HRESULT GetMode([in] BSTR NameOrChannel);
+	[id(15)] HRESULT WhoIs([in] BSTR nick);
+	[id(16)] HRESULT Who([in] BSTR nick);
+	[id(17)] HRESULT WhoWas([in] BSTR nick);
+	[id(18)] HRESULT Output([in] BSTR msg);
+	[id(19)] HRESULT SetTimer([in] LONG id, [in] LONG ms, [out, retval] LONG* res);
+	[id(20)] HRESULT GetActiveViewName([out, retval] BSTR* res);
+};
+[
+	uuid(4E40C3E9-CCF8-4451-BC7E-8B66E7D522D0 ),
+	version(1.0),
+	helpstring("NO5IRC 1.0 Type Library")
+]
+library MyServerLib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+	[
+		uuid(e6d38d0b-0644-485a-9824-7cd1524fb6c4)
+	]
+	dispinterface _INo5IrcObjEvents
+	{
+		properties:
+		methods:
+			[id(2)] HRESULT OnChannelList([in] BSTR channel, [in] BSTR users, [in] BSTR topic);
+			[id(3)] HRESULT OnChannelMode([in] BSTR channel, [in] BSTR modes);
+			[id(4)] HRESULT OnUserMode([in] BSTR user, [in] BSTR modes);
+			[id(5)] HRESULT OnTopic([in] BSTR channel, [in] BSTR topic);
+			[id(6)] HRESULT OnNamesInChannel([in] BSTR channel, [in] LPSAFEARRAY names);
+			[id(7)] HRESULT OnChannelMsg([in] BSTR channel, [in] BSTR user,[in] BSTR msg);
+			[id(8)] HRESULT OnPrivateMsg([in] BSTR user, [in] BSTR msg);
+			[id(9)] HRESULT OnUserQuit([in] BSTR channel, [in] BSTR user, [in] BSTR msg);
+			[id(10)] HRESULT OnUserJoin([in] BSTR channel, [in] BSTR user);
+			[id(11)] HRESULT OnUserPart([in] BSTR channel, [in] BSTR user, [in] BSTR msg);
+			[id(12)] HRESULT OnNotice([in] BSTR user, [in] BSTR msg);
+			[id(13)] HRESULT OnAction([in] BSTR channel, [in] BSTR from, [in] BSTR msg);
+			[id(14)] HRESULT OnUnknownCmd([in] BSTR line);
+			[id(15)] HRESULT OnMeJoin([in] BSTR channel, [in] BSTR nick);
+			[id(16)] HRESULT OnTimer([in] LONG timerid);
+	};
+	[
+		uuid(0dba6130-ba55-4119-ad12-66f0d5392379)
+	]
+	coclass No5IrcObj
+	{
+		[default] interface INo5IrcObj;
+		[default, source] dispinterface _INo5IrcObjEvents;
+	};
+};
+import "shobjidl.idl";

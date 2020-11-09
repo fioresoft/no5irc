@@ -5,6 +5,7 @@
 #define IDD_AUTOCOMPLETE                4
 #define ID_EDIT_COMPLETE                10
 #define IDD_ABOUTBOX                    100
+#define IDR_NO5IRCOBJ                   101
 #define IDD_PROPPAGE_SMALL              102
 #define IDR_MAINFRAME                   128
 #define IDR_MDICHILD                    129
@@ -34,6 +35,7 @@
 #define ID_EDIT_UNDERLINE               232
 #define IDC_FORE                        233
 #define IDC_BACK                        234
+#define IDD_SCRIPTS                     236
 #define IDC_LIST1                       1000
 #define IDC_EDIT1                       1001
 #define IDC_EDIT2                       1002
@@ -60,7 +62,9 @@
 #define IDC_BUTTON3                     1023
 #define IDC_BUTTON4                     1024
 #define IDC_BUTTON5                     1025
-#define IDC_RADIO1                      1030
+#define IDC_LV_TRANSFERS                1026
+#define IDC_LIST2                       1027
+#define IDC_BUTTON6                     1028
 #define ID_EDIT_DECFONT                 32776
 #define ID_EDIT_INCFONT                 32777
 #define ID_USER_SENDVERSIONREQUEST      32778
@@ -91,14 +95,16 @@
 #define ID_BUTTON32807                  32807
 #define ID_BUTTON32808                  32808
 #define ID_BUTTON32809                  32809
+#define ID_USER_SENDFILE                32810
+#define ID_USER_CHAT                    32811
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        236
-#define _APS_NEXT_COMMAND_VALUE         32810
+#define _APS_NEXT_RESOURCE_VALUE        237
+#define _APS_NEXT_COMMAND_VALUE         32812
 #define _APS_NEXT_CONTROL_VALUE         1031
-#define _APS_NEXT_SYMED_VALUE           101
+#define _APS_NEXT_SYMED_VALUE           102
 #endif
 #endif

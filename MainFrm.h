@@ -11,6 +11,8 @@
 #include "IFontOptions.h"
 #include "CFileSender.h"
 #include "CFileTransferMonitor.h"
+#include "CMyScriptSite.h"
+#include "CScriptsView.h"
 #ifdef NO5_SSL
 #include "openssl/ssl.h"
 #include "openssl/ssl3.h"
@@ -365,10 +367,15 @@ private:
 	IFontOptions* m_pfo;
 	bool m_bSendLogin;
 	bool m_bssl;
+	CScriptView* m_pScriptView;
 	CPointerArray<CFileSender> m_senders;
 	CPointerArray<CFileReceiver> m_receivers;
 	CFileTransferMonitor m_ftMonitor;
 	CSimpleMap<CString, IDCCChat*> m_Chats;
+	CComObject<CNo5IrcObj> *m_pIrc;
+	CComObject<CMyScriptSite>* m_pScriptSite;
+	CView m_output;
+	long m_timerid;
 	
 	//
 	void CreateTreeView();
@@ -382,6 +389,8 @@ private:
 	bool ParseUserName(const CString& user, CString& nick, CString& name, CString& ip);
 	void CreateView(LPCTSTR name = NULL, ViewType type = VIEW_NONE);
 	CString GetTimeString() const;
+	void CreateIrcObj();
+	void CreateScriptSite();
 public:
 	bool m_bDarkMode;
 	CMySocket m_sock;
@@ -414,12 +423,17 @@ public:
 		m_bDarkMode = false;
 		m_bssl = false;
 		m_bSendLogin = TRUE;
+		m_pScriptSite = NULL;
+		m_pIrc = NULL;
+		m_pScriptView = NULL;
+		m_timerid = 1;
 		//
 		//m_CmdBar.m_hIconChildMaximized = LoadIcon(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
 	}
 	~CMainFrame()
 	{
-		
+		if (m_pScriptView)
+			delete m_pScriptView;
 	}
 public:
 
@@ -445,6 +459,7 @@ public:
 		MESSAGE_HANDLER(WM_ONFONTCHANGE,OnFontChange)
 		MESSAGE_HANDLER(WM_ONFONTSIZECHANGE, OnFontSizeChange)
 		MESSAGE_HANDLER(WM_FINDUSER,OnFindUser)
+		MESSAGE_HANDLER(WM_TIMERMSG,OnTimerMsg)
 		COMMAND_ID_HANDLER(ID_APP_EXIT, OnFileExit)
 		COMMAND_ID_HANDLER(ID_FILE_NEW, OnFileNew)
 		COMMAND_ID_HANDLER(ID_FILE_SAVE,OnFileSave)
@@ -486,6 +501,7 @@ public:
 	LRESULT OnFontChange(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnFontSizeChange(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnFindUser(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
+	LRESULT OnTimerMsg(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFilePrint(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
@@ -541,15 +557,17 @@ public:
 	virtual void OnWhoSetTheTopic(LPCTSTR channel, LPCTSTR user, time_t time);
 	virtual void OnNamesInChannel(LPCTSTR channel,const CSimpleArray<CString>& args);
 	virtual void OnNamesEnd(LPCTSTR channel);
-	virtual void OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg);
-	virtual void OnPrivateMsg(LPCTSTR from, LPCTSTR msg);
+	virtual void OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg,bool script);
+	virtual void OnPrivateMsg(LPCTSTR from, LPCTSTR msg,bool script);
 	virtual void OnUserQuit(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);
 	virtual void OnUserJoin(LPCTSTR channel, LPCTSTR user);
 	virtual void OnUserPart(LPCTSTR channel, LPCTSTR user, LPCTSTR msg);
-	virtual void OnNotice(LPCTSTR user, LPCTSTR msg);
+	virtual void OnNotice(LPCTSTR user, LPCTSTR msg,bool script);
 	virtual void OnPing(LPCTSTR code);
 	virtual void OnAction(LPCTSTR channel,LPCTSTR from, LPCTSTR msg);
 	virtual void OnUnknownCmd(LPCTSTR line);
+	virtual void OnMeJoin(LPCTSTR channel, LPCTSTR nick);
+	virtual void OnTimer(long id);
 	//
 	virtual void SendChannelMsg(LPCTSTR channel, LPCTSTR msg);
 	virtual void SendPrivateMsg(LPCTSTR to, LPCTSTR msg);
@@ -577,6 +595,9 @@ public:
 	virtual void WhoIs(LPCTSTR nick);
 	virtual void Who(LPCTSTR nick);
 	virtual void WhoWas(LPCTSTR nick);
+	virtual void Output(LPCTSTR msg);
+	virtual long SetTimer(long id, long ms);
+	virtual CString GetActiveViewName();
 	// DCC
 	void UserSendFile(LPCTSTR nick); // me sending a file to nick
 	void UserRecvFile(LPCTSTR nick,LPCTSTR tag);
@@ -588,4 +609,11 @@ public:
 	virtual void OnLineRead(LPCTSTR nick, LPCTSTR line);
 	virtual void OnSockConnected(LPCTSTR nick,CSocketAddress &sa);
 	virtual void OnSockClose(LPCTSTR nick, LPCTSTR msg);
+	//
+	static void CALLBACK TimerProc(HWND hWnd, UINT msg, UINT_PTR id, DWORD t)
+	{
+		CWindow wnd = hWnd;
+
+		wnd.SendMessage(WM_TIMERMSG, (WPARAM)id, (LPARAM)t);
+	}
 };

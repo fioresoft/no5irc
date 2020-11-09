@@ -8,3 +8,4 @@
 #define WM_ONFONTCHANGE			(WM_USER + 8)
 #define WM_ONFONTSIZECHANGE		(WM_USER + 9)
 #define WM_FINDUSER				(WM_USER + 10)
+#define WM_TIMERMSG				(WM_USER + 11)

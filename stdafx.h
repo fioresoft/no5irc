@@ -35,7 +35,6 @@ extern CAppModule _Module;
 #include <atlhost.h>
 #include <atlwin.h>
 #include <atlctl.h>
-
 #include <atlframe.h>
 #include <atlctrls.h>
 #include <atldlgs.h>
@@ -50,6 +49,7 @@ extern CAppModule _Module;
 #include "../NO5TL/atlsplit2.h"
 #include <include/atlgdix.h>
 #include <include/DotNetTabCtrl.h>
+#include <include/SimpleTabCtrls.h>
 #include <include/TabbedFrame.h>
 #include <include/tabbedmdi.h>
 //#include <utf8/utf8.h>
@@ -65,8 +65,12 @@ extern CAppModule _Module;
 #include "..\NO5TL\MarqueeWnd.h"
 #include "..\NO5TL\VersionInfo.h"
 #include "..\NO5TL\Color.h"
+#include "..\NO5TL\ScriptSite.h"
+#include "..\NO5TL\SafeArray.h"
+#include "..\NO5TL\WinFile.h"
 #include "viksoe/FontCombo.h"
 #include "viksoe/ColorCombo.h"
+#include "Path.h"
 using namespace NO5TL;
 
 
