@@ -212,11 +212,14 @@
     <ClCompile Include="CFileSender.cpp" />
     <ClCompile Include="CFileTransferMonitor.cpp" />
     <ClCompile Include="ChildFrm.cpp" />
+    <ClCompile Include="CMyScriptSite.cpp" />
     <ClCompile Include="COptionsDlg.cpp" />
+    <ClCompile Include="CScriptsView.cpp" />
     <ClCompile Include="IFontOptions.cpp" />
     <ClCompile Include="IIRCEvents.cpp" />
     <ClCompile Include="irc11.cpp" />
     <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="No5IrcObj.cpp" />
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -231,16 +234,20 @@
     <ClInclude Include="CFileSender.h" />
     <ClInclude Include="CFileTransferMonitor.h" />
     <ClInclude Include="ChildFrm.h" />
+    <ClInclude Include="CMyScriptSite.h" />
     <ClInclude Include="COptionsDlg.h" />
+    <ClInclude Include="CScriptsView.h" />
     <ClInclude Include="IFontOptions.h" />
     <ClInclude Include="IIrc.h" />
     <ClInclude Include="IIRCEvents.h" />
     <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="No5IrcObj.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="usermsgs.h" />
     <ClInclude Include="View.h" />
+    <ClInclude Include="_INo5IrcObjEvents_CP.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="irc11.rc" />
@@ -270,6 +277,12 @@
     <Image Include="res\toolbar3.bmp" />
     <Image Include="res\toolbar4.bmp" />
     <Image Include="res\underline.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="MyServer.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="No5IrcObj.rgs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -248,7 +248,7 @@ END
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION 1,0,1,0
- PRODUCTVERSION 0,6,2,0
+ PRODUCTVERSION 0,6,2,9
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -270,7 +270,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright 2020"
             VALUE "OriginalFilename", "irc11.exe"
             VALUE "ProductName", "NO5 IRC"
-            VALUE "ProductVersion", "0.6.2.0"
+            VALUE "ProductVersion", "0.6.2.9"
         END
     END
     BLOCK "VarFileInfo"
@@ -450,6 +450,9 @@ BEGIN
         MENUITEM "Send TIME request",           ID_USER_SENDTIMEREQUEST
         MENUITEM "Who Is",                      ID_USER_WHOIS
         MENUITEM "Who",                         ID_USER_WHO
+        MENUITEM SEPARATOR
+        MENUITEM "Send File",                   ID_USER_SENDFILE
+        MENUITEM "Chat",                        ID_USER_CHAT
     END
 END
 
@@ -540,6 +543,21 @@ BEGIN
     LTEXT           "Estático",IDC_STATIC1,6,96,185,23
 END
 
+IDD_SCRIPTS DIALOG 0, 0, 176, 196
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Run",IDC_BUTTON1,7,70,34,14
+    PUSHBUTTON      "Edit",IDC_BUTTON2,45,70,34,14
+    PUSHBUTTON      "Stop all",IDC_BUTTON3,60,175,50,14
+    LISTBOX         IDC_LIST1,7,5,160,60,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "running scripts:",IDC_STATIC1,7,95,160,8
+    LISTBOX         IDC_LIST2,7,110,160,60,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Stop",IDC_BUTTON4,7,175,50,14
+    PUSHBUTTON      "Reload",IDC_BUTTON5,85,70,34,14
+    PUSHBUTTON      "New",IDC_BUTTON6,125,70,34,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -570,6 +588,10 @@ BEGIN
     END
 
     IDD_PROPPAGE_SMALL1, DIALOG
+    BEGIN
+    END
+
+    IDD_SCRIPTS, DIALOG
     BEGIN
     END
 END
@@ -617,6 +639,14 @@ IDD_PROPPAGE_SMALL1 AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// REGISTRY
+//
+
+IDR_NO5IRCOBJ           REGISTRY                "No5IrcObj.rgs"
 
 #endif    // Português (Brasil) resources
 /////////////////////////////////////////////////////////////////////////////
