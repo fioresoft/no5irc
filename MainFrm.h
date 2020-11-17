@@ -375,7 +375,7 @@ private:
 	CComObject<CNo5IrcObj> *m_pIrc;
 	CComObject<CMyScriptSite>* m_pScriptSite;
 	CView m_output;
-	long m_timerid;
+	//long m_timerid;
 	
 	//
 	void CreateTreeView();
@@ -426,7 +426,7 @@ public:
 		m_pScriptSite = NULL;
 		m_pIrc = NULL;
 		m_pScriptView = NULL;
-		m_timerid = 1;
+		//m_timerid = 1;
 		//
 		//m_CmdBar.m_hIconChildMaximized = LoadIcon(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
 	}

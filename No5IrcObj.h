@@ -1,6 +1,8 @@
 // No5IrcObj.h: declaração do CNo5IrcObj
 
 #pragma once
+#include "stdafx.h"
+#include "..\NO5TL\no5tlbase.h"
 #include "resource.h"       // símbolos principais
 #include "irc11.h"
 #include "IIRCEvents.h"
@@ -44,9 +46,12 @@ public:
 		HRESULT hr = LoadTypeLib(OLESTR("irc11.tlb"), &ptl);
 		if (SUCCEEDED(hr)) {
 			ptl->Release();
-			//hr = UpdateRegistry(TRUE);
+			//hr = UpdateRegistry(FALSE);
 		}
 		ATLASSERT(SUCCEEDED(hr));
+		if (FAILED(hr)) {
+			MessageBox(GetDesktopWindow(), GetErrorDesc(hr), _T("NO5 IRC"), MB_ICONERROR);
+		}
 	}
 
 DECLARE_REGISTRY_RESOURCEID(IDR_NO5IRCOBJ)
@@ -104,4 +109,90 @@ public:
 	STDMETHOD(SetTimer)(LONG id, LONG ms, LONG* pRes);
 	STDMETHOD(GetActiveViewName)(BSTR* pRes);
 	//STDMETHOD(OnChannelList)(BSTR channel, BSTR users, BSTR topic);
+};
+
+class ATL_NO_VTABLE CUser :
+	public CComObjectRootEx<CComSingleThreadModel>,
+	public ISupportErrorInfo,
+	public IDispatchImpl<IUser, &IID_IUser>
+{
+	CComBSTR m_name;
+public:
+	CUser()
+	{
+
+	}
+	virtual ~CUser()
+	{
+
+	}
+	void Init(LPCTSTR name) {
+		m_name = name;
+	}
+
+	DECLARE_NOT_AGGREGATABLE(CUser)
+
+	BEGIN_COM_MAP(CUser)
+		//COM_INTERFACE_ENTRY(IUnknown)
+		COM_INTERFACE_ENTRY(IUser)
+		COM_INTERFACE_ENTRY2(IDispatch, IUser)
+		//COM_INTERFACE_ENTRY(IDispatch)
+		COM_INTERFACE_ENTRY(ISupportErrorInfo)
+	END_COM_MAP()
+
+	// ISupportsErrorInfo
+	STDMETHOD(InterfaceSupportsErrorInfo)(REFIID riid);
+
+	DECLARE_PROTECT_FINAL_CONSTRUCT()
+
+	HRESULT FinalConstruct()
+	{
+		return S_OK;
+	}
+
+	void FinalRelease()
+	{
+	}
+
+public:
+	STDMETHOD(Name)(BSTR* pRes);
+};
+
+class CUsers : \
+	public CComObjectRootEx<CComSingleThreadModel>,
+	public ISupportErrorInfo,
+	public IDispatchImpl<IUsers, &IID_IUsers>
+{
+	CSimpleArray<CComBSTR> m_users;
+public:
+	// ISupportsErrorInfo
+	STDMETHOD(InterfaceSupportsErrorInfo)(REFIID riid);
+
+	DECLARE_NOT_AGGREGATABLE(CUsers)
+	DECLARE_PROTECT_FINAL_CONSTRUCT()
+
+	BEGIN_COM_MAP(CUsers)
+		//COM_INTERFACE_ENTRY(IUnknown)
+		COM_INTERFACE_ENTRY(IUsers)
+		COM_INTERFACE_ENTRY2(IDispatch, IUsers)
+		//COM_INTERFACE_ENTRY(IDispatch)
+		COM_INTERFACE_ENTRY(ISupportErrorInfo)
+	END_COM_MAP()
+
+	HRESULT FinalConstruct()
+	{
+		return S_OK;
+	}
+
+	void FinalRelease()
+	{
+	}
+
+	void CUsers::Init(const CSimpleArray<CComBSTR>& users)
+	{
+		CopySimpleArray(m_users, users);
+	}
+	STDMETHOD(get_Count)(long* pVal);
+	STDMETHOD(get_Item)(long n, IDispatch** pVal);
+	STDMETHOD(get__NewEnum)(IUnknown** pVal);
 };

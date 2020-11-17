@@ -123,7 +123,7 @@ public:
 		}
 		return hr;
 	}
-	HRESULT Fire_OnNamesInChannel(BSTR channel, LPSAFEARRAY names)
+	HRESULT Fire_OnNamesInChannel(BSTR channel, IDispatch *pUsers)
 	{
 		HRESULT hr = S_OK;
 		T* pThis = static_cast<T*>(this);
@@ -142,12 +142,12 @@ public:
 				CComVariant avarParams[2];
 				avarParams[1] = channel;
 				avarParams[1].vt = VT_BSTR;
-				avarParams[0] = names;
-				avarParams[0].vt = VT_SAFEARRAY | VT_BYREF;
+				avarParams[0] = pUsers;
+				avarParams[0].vt = VT_DISPATCH;
 				CComVariant varResult;
 
 				DISPPARAMS params = { avarParams, NULL, 2, 0 };
-				hr = pConnection->Invoke(6, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &params, &varResult, NULL, NULL);
+				hr = pConnection->Invoke(6, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &params, NULL, NULL, NULL);
 			}
 		}
 		return hr;
@@ -272,36 +272,6 @@ public:
 		}
 		return hr;
 	}
-	HRESULT Fire_OnMeJoin(BSTR channel, BSTR nick)
-	{
-		HRESULT hr = S_OK;
-		T* pThis = static_cast<T*>(this);
-		int cConnections = m_vec.GetSize();
-
-		for (int iConnection = 0; iConnection < cConnections; iConnection++)
-		{
-			pThis->Lock();
-			CComPtr<IUnknown> punkConnection = m_vec.GetAt(iConnection);
-			pThis->Unlock();
-
-			IDispatch* pConnection = static_cast<IDispatch*>(punkConnection.p);
-
-			if (pConnection)
-			{
-				CComVariant avarParams[2];
-				avarParams[1] = channel;
-				avarParams[1].vt = VT_BSTR;
-				avarParams[0] = nick;
-				avarParams[0].vt = VT_BSTR;
-				CComVariant varResult;
-
-				DISPPARAMS params = { avarParams, NULL, 2, 0 };
-				hr = pConnection->Invoke(15, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &params, &varResult, NULL, NULL);
-				ATLASSERT(SUCCEEDED(hr));
-			}
-		}
-		return hr;
-	}
 	HRESULT Fire_OnUserPart(BSTR channel, BSTR user, BSTR msg)
 	{
 		HRESULT hr = S_OK;
@@ -416,6 +386,36 @@ public:
 
 				DISPPARAMS params = { avarParams, NULL, 1, 0 };
 				hr = pConnection->Invoke(14, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &params, &varResult, NULL, NULL);
+			}
+		}
+		return hr;
+	}
+	HRESULT Fire_OnMeJoin(BSTR channel, BSTR nick)
+	{
+		HRESULT hr = S_OK;
+		T* pThis = static_cast<T*>(this);
+		int cConnections = m_vec.GetSize();
+
+		for (int iConnection = 0; iConnection < cConnections; iConnection++)
+		{
+			pThis->Lock();
+			CComPtr<IUnknown> punkConnection = m_vec.GetAt(iConnection);
+			pThis->Unlock();
+
+			IDispatch* pConnection = static_cast<IDispatch*>(punkConnection.p);
+
+			if (pConnection)
+			{
+				CComVariant avarParams[2];
+				avarParams[1] = channel;
+				avarParams[1].vt = VT_BSTR;
+				avarParams[0] = nick;
+				avarParams[0].vt = VT_BSTR;
+				CComVariant varResult;
+
+				DISPPARAMS params = { avarParams, NULL, 2, 0 };
+				hr = pConnection->Invoke(15, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &params, &varResult, NULL, NULL);
+				ATLASSERT(SUCCEEDED(hr));
 			}
 		}
 		return hr;

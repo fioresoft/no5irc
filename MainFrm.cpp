@@ -201,7 +201,7 @@ LRESULT CMainFrame::OnChildDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lPar
 	if (p->type == VIEW_CHANNEL) {
 		if (m_sock.IsConnected()) {
 			if (m_bInChannel && p->name[0] == '#') {
-				LeaveChannel(p->name, _T("N05 IRC for Windows at https://fioresoft.net"));
+				LeaveChannel(p->name, _T("NO5 IRC for Windows at https://fioresoft.net"));
 
 				// deletes the channel tree node
 				m_tv.DeleteItem(p->name, TRUE, TRUE);
@@ -1627,6 +1627,9 @@ void CMainFrame::OnSockRead(int error)
 			else if (!code.Compare(_T("353"))) { // names in channel
 				if (count2 >= 5 && params[4].GetAt(0) == '#') {
 					m_NameOrChannel = params[4];
+					if (params[5].GetAt(0) == ':') {
+						params[5] = params[5].Right(params[5].GetLength() - 1);
+					}
 					OnNamesInChannel(params[4], params);
 				}
 			}
@@ -2142,15 +2145,27 @@ void CMainFrame::OnNamesInChannel(LPCTSTR channel, const CSimpleArray<CString>& 
 				OnMeJoin(channel, name);
 		}
 	}
-	/*CSafeArray<BSTR, VT_BSTR> sa;
+	CSimpleArray<CComBSTR> names;
 	CComBSTR bstr;
-	for (int i = 5, j = 0; i < args.GetSize(); i++, j++) {
-		bstr = args[i];
-		sa.PutElement(j, bstr.Detach());
+	{
+		for (int i = 5, j = 0; i < args.GetSize(); i++, j++) {
+			bstr = args[i];
+			//sa.PutElement(j, bstr.Detach());
+			names.Add(bstr);
+		}
 	}
 	CComBSTR ch = channel;
-	HRESULT hr = m_pIrc->Fire_OnNamesInChannel(ch, sa.Detach());
-	ATLASSERT(SUCCEEDED(hr));*/
+	CComObject<CUsers>* pObj = NULL;
+	HRESULT hr = CComObject<CUsers>::CreateInstance(&pObj);
+	ATLASSERT(SUCCEEDED(hr));
+	CComPtr<IDispatch> sp;
+	hr = pObj->QueryInterface(&sp);
+	ATLASSERT(SUCCEEDED(hr));
+	pObj->Init(names);
+	if (SUCCEEDED(hr)) {
+		hr = m_pIrc->Fire_OnNamesInChannel(ch,sp);
+	}
+	//MessageBox(GetErrorDesc(hr));
 }
 
 void CMainFrame::OnNamesEnd(LPCTSTR channel)
@@ -3199,7 +3214,7 @@ void CMainFrame::CreateScriptSite()
 		CComPtr<IDispatch> sp;
 		hr = m_pIrc->QueryInterface(&sp);
 		ATLASSERT(SUCCEEDED(hr));
-		hr = m_pScriptSite->Init(sp);
+		hr = m_pScriptSite->Init(sp,_T("vbscript"));
 		sp.Detach();
 		//hr = m_pScriptSite->Initiate(_T("vbscript"), m_hWnd);
 		if (SUCCEEDED(hr)) {

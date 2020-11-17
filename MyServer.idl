@@ -37,6 +37,34 @@ interface INo5IrcObj : IDispatch
 	[id(19)] HRESULT SetTimer([in] LONG id, [in] LONG ms, [out, retval] LONG* res);
 	[id(20)] HRESULT GetActiveViewName([out, retval] BSTR* res);
 };
+
+[
+	object,
+	uuid(459D1B63-A9A0-44E9-9673-CF88CF8EE817),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IUser : IDispatch
+{
+	[id(1)] HRESULT Name([out, retval] BSTR * pBSTR);
+};
+
+[
+	object,
+	uuid(F7F8889B-5703-49C9-8F4D-825B6E8FC8CC),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IUsers : IDispatch
+{
+	[id(1)] HRESULT get_Count(long* pRet);
+	[id(DISPID_VALUE)] HRESULT get_Item(long n,[out,retval]IDispatch** pVal);
+	[id(DISPID_NEWENUM),restricted] HRESULT get__NewEnum([out,retval]IUnknown** pVal);
+};
+
+
 [
 	uuid(4E40C3E9-CCF8-4451-BC7E-8B66E7D522D0 ),
 	version(1.0),
@@ -57,7 +85,7 @@ library MyServerLib
 			[id(3)] HRESULT OnChannelMode([in] BSTR channel, [in] BSTR modes);
 			[id(4)] HRESULT OnUserMode([in] BSTR user, [in] BSTR modes);
 			[id(5)] HRESULT OnTopic([in] BSTR channel, [in] BSTR topic);
-			[id(6)] HRESULT OnNamesInChannel([in] BSTR channel, [in] LPSAFEARRAY names);
+			[id(6)] HRESULT OnNamesInChannel([in] BSTR channel, [in] IDispatch * users);
 			[id(7)] HRESULT OnChannelMsg([in] BSTR channel, [in] BSTR user,[in] BSTR msg);
 			[id(8)] HRESULT OnPrivateMsg([in] BSTR user, [in] BSTR msg);
 			[id(9)] HRESULT OnUserQuit([in] BSTR channel, [in] BSTR user, [in] BSTR msg);
@@ -77,5 +105,21 @@ library MyServerLib
 		[default] interface INo5IrcObj;
 		[default, source] dispinterface _INo5IrcObjEvents;
 	};
+	[
+		uuid(39BDBBF4-BBBD-48F4-A6CB-B24A9288EC07)
+	]
+	coclass User
+	{
+		[default] interface IUser;
+	};
+
+	[
+		uuid(30AB88AE-ED7A-44C0-9215-18CFE9513D2C)
+	]
+	coclass Users
+	{
+		[default] interface IUsers;
+	};
+
 };
 import "shobjidl.idl";
