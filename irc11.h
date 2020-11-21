@@ -465,7 +465,7 @@ EXTERN_C const IID IID_IUser;
     IUser : public IDispatch
     {
     public:
-        virtual /* [id] */ HRESULT STDMETHODCALLTYPE Name( 
+        virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_Name( 
             /* [retval][out] */ BSTR *pBSTR) = 0;
         
     };
@@ -526,7 +526,7 @@ EXTERN_C const IID IID_IUser;
             /* [annotation][out] */ 
             _Out_opt_  UINT *puArgErr);
         
-        /* [id] */ HRESULT ( STDMETHODCALLTYPE *Name )( 
+        /* [id][propget] */ HRESULT ( STDMETHODCALLTYPE *get_Name )( 
             IUser * This,
             /* [retval][out] */ BSTR *pBSTR);
         
@@ -566,8 +566,8 @@ EXTERN_C const IID IID_IUser;
     ( (This)->lpVtbl -> Invoke(This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr) ) 
 
 
-#define IUser_Name(This,pBSTR)	\
-    ( (This)->lpVtbl -> Name(This,pBSTR) ) 
+#define IUser_get_Name(This,pBSTR)	\
+    ( (This)->lpVtbl -> get_Name(This,pBSTR) ) 
 
 #endif /* COBJMACROS */
 
@@ -595,14 +595,14 @@ EXTERN_C const IID IID_IUsers;
     IUsers : public IDispatch
     {
     public:
-        virtual /* [id] */ HRESULT STDMETHODCALLTYPE get_Count( 
-            long *pRet) = 0;
+        virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_Count( 
+            /* [retval][out] */ long *pRet) = 0;
         
-        virtual /* [id] */ HRESULT STDMETHODCALLTYPE get_Item( 
+        virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_Item( 
             long n,
             /* [retval][out] */ IDispatch **pVal) = 0;
         
-        virtual /* [restricted][id] */ HRESULT STDMETHODCALLTYPE get__NewEnum( 
+        virtual /* [restricted][id][propget] */ HRESULT STDMETHODCALLTYPE get__NewEnum( 
             /* [retval][out] */ IUnknown **pVal) = 0;
         
     };
@@ -663,16 +663,16 @@ EXTERN_C const IID IID_IUsers;
             /* [annotation][out] */ 
             _Out_opt_  UINT *puArgErr);
         
-        /* [id] */ HRESULT ( STDMETHODCALLTYPE *get_Count )( 
+        /* [id][propget] */ HRESULT ( STDMETHODCALLTYPE *get_Count )( 
             IUsers * This,
-            long *pRet);
+            /* [retval][out] */ long *pRet);
         
-        /* [id] */ HRESULT ( STDMETHODCALLTYPE *get_Item )( 
+        /* [id][propget] */ HRESULT ( STDMETHODCALLTYPE *get_Item )( 
             IUsers * This,
             long n,
             /* [retval][out] */ IDispatch **pVal);
         
-        /* [restricted][id] */ HRESULT ( STDMETHODCALLTYPE *get__NewEnum )( 
+        /* [restricted][id][propget] */ HRESULT ( STDMETHODCALLTYPE *get__NewEnum )( 
             IUsers * This,
             /* [retval][out] */ IUnknown **pVal);
         

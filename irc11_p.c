@@ -48,7 +48,7 @@
 
 #include "irc11.h"
 
-#define TYPE_FORMAT_STRING_SIZE   119                               
+#define TYPE_FORMAT_STRING_SIZE   115                               
 #define PROC_FORMAT_STRING_SIZE   907                               
 #define EXPR_FORMAT_STRING_SIZE   1                                 
 #define TRANSMIT_AS_TABLE_SIZE    0            
@@ -760,7 +760,7 @@ static const MyServer_MIDL_PROC_FORMAT_STRING MyServer__MIDL_ProcFormatString =
 /* 754 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
-	/* Procedure Name */
+	/* Procedure get_Name */
 
 /* 756 */	0x33,		/* FC_AUTO_HANDLE */
 			0x6c,		/* Old Flags:  object, Oi2 */
@@ -797,8 +797,8 @@ static const MyServer_MIDL_PROC_FORMAT_STRING MyServer__MIDL_ProcFormatString =
 /* 794 */	NdrFcLong( 0x0 ),	/* 0 */
 /* 798 */	NdrFcShort( 0x7 ),	/* 7 */
 /* 800 */	NdrFcShort( 0xc ),	/* x86 Stack size/offset = 12 */
-/* 802 */	NdrFcShort( 0x1c ),	/* 28 */
-/* 804 */	NdrFcShort( 0x8 ),	/* 8 */
+/* 802 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 804 */	NdrFcShort( 0x24 ),	/* 36 */
 /* 806 */	0x44,		/* Oi2 Flags:  has return, has ext, */
 			0x2,		/* 2 */
 /* 808 */	0x8,		/* 8 */
@@ -809,7 +809,7 @@ static const MyServer_MIDL_PROC_FORMAT_STRING MyServer__MIDL_ProcFormatString =
 
 	/* Parameter pRet */
 
-/* 816 */	NdrFcShort( 0x148 ),	/* Flags:  in, base type, simple ref, */
+/* 816 */	NdrFcShort( 0x2150 ),	/* Flags:  out, base type, simple ref, srv alloc size=8 */
 /* 818 */	NdrFcShort( 0x4 ),	/* x86 Stack size/offset = 4 */
 /* 820 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
@@ -849,7 +849,7 @@ static const MyServer_MIDL_PROC_FORMAT_STRING MyServer__MIDL_ProcFormatString =
 
 /* 858 */	NdrFcShort( 0x13 ),	/* Flags:  must size, must free, out, */
 /* 860 */	NdrFcShort( 0x8 ),	/* x86 Stack size/offset = 8 */
-/* 862 */	NdrFcShort( 0x4a ),	/* Type Offset=74 */
+/* 862 */	NdrFcShort( 0x46 ),	/* Type Offset=70 */
 
 	/* Return value */
 
@@ -879,7 +879,7 @@ static const MyServer_MIDL_PROC_FORMAT_STRING MyServer__MIDL_ProcFormatString =
 
 /* 894 */	NdrFcShort( 0x13 ),	/* Flags:  must size, must free, out, */
 /* 896 */	NdrFcShort( 0x4 ),	/* x86 Stack size/offset = 4 */
-/* 898 */	NdrFcShort( 0x60 ),	/* Type Offset=96 */
+/* 898 */	NdrFcShort( 0x5c ),	/* Type Offset=92 */
 
 	/* Return value */
 
@@ -946,42 +946,38 @@ static const MyServer_MIDL_TYPE_FORMAT_STRING MyServer__MIDL_TypeFormatString =
 /* 66 */	NdrFcShort( 0x0 ),	/* 0 */
 /* 68 */	NdrFcShort( 0xfff4 ),	/* Offset= -12 (56) */
 /* 70 */	
-			0x11, 0x8,	/* FC_RP [simple_pointer] */
-/* 72 */	0x8,		/* FC_LONG */
-			0x5c,		/* FC_PAD */
-/* 74 */	
 			0x11, 0x10,	/* FC_RP [pointer_deref] */
-/* 76 */	NdrFcShort( 0x2 ),	/* Offset= 2 (78) */
-/* 78 */	
+/* 72 */	NdrFcShort( 0x2 ),	/* Offset= 2 (74) */
+/* 74 */	
 			0x2f,		/* FC_IP */
 			0x5a,		/* FC_CONSTANT_IID */
-/* 80 */	NdrFcLong( 0x20400 ),	/* 132096 */
-/* 84 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 86 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 88 */	0xc0,		/* 192 */
+/* 76 */	NdrFcLong( 0x20400 ),	/* 132096 */
+/* 80 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 82 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 84 */	0xc0,		/* 192 */
+			0x0,		/* 0 */
+/* 86 */	0x0,		/* 0 */
+			0x0,		/* 0 */
+/* 88 */	0x0,		/* 0 */
 			0x0,		/* 0 */
 /* 90 */	0x0,		/* 0 */
-			0x0,		/* 0 */
-/* 92 */	0x0,		/* 0 */
-			0x0,		/* 0 */
-/* 94 */	0x0,		/* 0 */
 			0x46,		/* 70 */
-/* 96 */	
+/* 92 */	
 			0x11, 0x10,	/* FC_RP [pointer_deref] */
-/* 98 */	NdrFcShort( 0x2 ),	/* Offset= 2 (100) */
-/* 100 */	
+/* 94 */	NdrFcShort( 0x2 ),	/* Offset= 2 (96) */
+/* 96 */	
 			0x2f,		/* FC_IP */
 			0x5a,		/* FC_CONSTANT_IID */
-/* 102 */	NdrFcLong( 0x0 ),	/* 0 */
-/* 106 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 108 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 110 */	0xc0,		/* 192 */
+/* 98 */	NdrFcLong( 0x0 ),	/* 0 */
+/* 102 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 104 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 106 */	0xc0,		/* 192 */
+			0x0,		/* 0 */
+/* 108 */	0x0,		/* 0 */
+			0x0,		/* 0 */
+/* 110 */	0x0,		/* 0 */
 			0x0,		/* 0 */
 /* 112 */	0x0,		/* 0 */
-			0x0,		/* 0 */
-/* 114 */	0x0,		/* 0 */
-			0x0,		/* 0 */
-/* 116 */	0x0,		/* 0 */
 			0x46,		/* 70 */
 
 			0x0
@@ -1180,7 +1176,7 @@ CINTERFACE_PROXY_VTABLE(8) _IUserProxyVtbl =
     0 /* IDispatch::GetTypeInfo */ ,
     0 /* IDispatch::GetIDsOfNames */ ,
     0 /* IDispatch_Invoke_Proxy */ ,
-    (void *) (INT_PTR) -1 /* IUser::Name */
+    (void *) (INT_PTR) -1 /* IUser::get_Name */
 };
 
 

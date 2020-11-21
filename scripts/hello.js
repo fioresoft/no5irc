@@ -1,0 +1,1 @@
+no5.Output("hello javascript");

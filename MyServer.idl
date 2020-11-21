@@ -47,7 +47,7 @@ interface INo5IrcObj : IDispatch
 ]
 interface IUser : IDispatch
 {
-	[id(1)] HRESULT Name([out, retval] BSTR * pBSTR);
+	[propget,id(1)] HRESULT Name([out, retval] BSTR * pBSTR);
 };
 
 [
@@ -59,9 +59,9 @@ interface IUser : IDispatch
 ]
 interface IUsers : IDispatch
 {
-	[id(1)] HRESULT get_Count(long* pRet);
-	[id(DISPID_VALUE)] HRESULT get_Item(long n,[out,retval]IDispatch** pVal);
-	[id(DISPID_NEWENUM),restricted] HRESULT get__NewEnum([out,retval]IUnknown** pVal);
+	[propget,id(1)] HRESULT Count([out,retval] long* pRet);
+	[propget,id(DISPID_VALUE)] HRESULT Item(long n,[out,retval]IDispatch** pVal);
+	[propget,id(DISPID_NEWENUM),restricted] HRESULT _NewEnum([out,retval]IUnknown** pVal);
 };
 
 

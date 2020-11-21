@@ -46,7 +46,7 @@ public:
 		HRESULT hr = LoadTypeLib(OLESTR("irc11.tlb"), &ptl);
 		if (SUCCEEDED(hr)) {
 			ptl->Release();
-			//hr = UpdateRegistry(FALSE);
+			hr = UpdateRegistry(FALSE);
 		}
 		ATLASSERT(SUCCEEDED(hr));
 		if (FAILED(hr)) {
@@ -155,7 +155,7 @@ public:
 	}
 
 public:
-	STDMETHOD(Name)(BSTR* pRes);
+	STDMETHOD(get_Name)(BSTR* pRes);
 };
 
 class CUsers : \
