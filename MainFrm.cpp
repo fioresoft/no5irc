@@ -20,6 +20,7 @@
 
 static BOOL CALLBACK EnumChildGetDataByName(HWND hWnd, LPARAM lParam);
 static BOOL CALLBACK EnumChildActivate(HWND hWnd, LPARAM lParam);
+static BOOL CALLBACK EnumViews(HWND hWnd, LPARAM lParam);
 static int CALLBACK CompareLVItems(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
 LRESULT CMyTabbedChildWindow::OnLVDoubleClick(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
@@ -75,10 +76,17 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	// remove old menu
 	SetMenu(NULL);
 
-	m_path.SetPath(PATH_MODULE);
+	TCHAR szPath[_MAX_PATH];
+	GetModuleFileName(0, szPath, _MAX_PATH);
+	m_path.SetPath(szPath, FALSE, FALSE);
 	m_path = m_path.GetLocation();
-	BOOL res = LoadUserSettings();
+	BOOL res = m_path.ExistLocation();
 	ATLASSERT(res);
+	res = LoadUserSettings();
+	ATLASSERT(res);
+	if (!res) {
+		MessageBox(_T("failed to load settings"), m_path);
+	}
 
 	HWND hWndToolBar = CreateSimpleToolBarCtrl(m_hWnd, IDR_MAINFRAME, FALSE, ATL_SIMPLE_TOOLBAR_PANE_STYLE);
 
@@ -161,6 +169,7 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	CComQIPtr<IDispatch> sp;
 	HRESULT hr = m_pIrc->QueryInterface(&sp);
 	m_pScriptView = new CScriptView(sp);
+	m_pScriptView->m_editor = m_editor;
 	m_pScriptView->Create(m_tab, rcDefault);
 	m_tab.AddTab(m_pScriptView->m_hWnd, _T("scripts"));
 
@@ -421,6 +430,29 @@ LRESULT CMainFrame::OnFindUser(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 		}
 	}
 	return res;
+}
+
+LRESULT CMainFrame::OnGetUsers(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
+{
+	ViewData* p = GetViewDataByName((LPCTSTR)wParam);
+	CSimpleArray<CComBSTR>* names = (CSimpleArray<CComBSTR>*)lParam;
+
+	ATLASSERT(p);
+	if (p && p->type == ViewType::VIEW_CHANNEL) {
+		CNo5TreeItem item = m_tv.FindItem(p->name, FALSE, TRUE);
+		if (!item.IsNull()) {
+			CComBSTR _name;
+			CString name;
+			item = item.GetChild();
+			while (item) {
+				m_tv.GetItemText(item, name);
+				_name = name;
+				names->Add(_name);
+				item = item.GetNextSibling();
+			}
+		}
+	}
+	return 0;
 }
 
 LRESULT CMainFrame::OnTimerMsg(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -1125,6 +1157,12 @@ struct EnumData2
 	CWindow hmdiclient;
 };
 
+struct EnumData3
+{
+	CSimpleArray<ViewData*> views;
+	CWindow hmdiClient;
+};
+
 ViewData* CMainFrame::GetViewDataByName(LPCTSTR name)
 {
 	CString _name = name;
@@ -1171,6 +1209,29 @@ CView* CMainFrame::CreateChannel(LPCTSTR channel)
 	ActivateViewByName(channel);
 	return p;
 }
+
+int CMainFrame::GetActiveViews(CSimpleArray<ViewData*> &data)
+{
+	EnumData3 data3;
+	
+
+	ATLASSERT(m_hWndMDIClient != NULL);	// FAILS! TODO
+	data3.hmdiClient = m_hWndMDIClient;
+	EnumChildWindows(m_hWndMDIClient, EnumViews, (LPARAM)&data3);
+	CopySimpleArray(data,data3.views);
+	return data3.views.GetSize();
+	/*CWindow wnd;
+	CWindow client = m_tab.GetTabCtrl();
+	ATLASSERT(client.IsWindow());
+	do{
+		wnd = client.GetWindow(GW_CHILD);
+		ViewData* pData = (ViewData*)wnd.SendMessage(WM_CHILDGETDATA);
+		if (pData)
+			data.Add(pData);
+	}while (wnd.IsWindow());
+	return data.GetSize();*/
+	///////////////
+}
 bool CMainFrame::ActivateViewByName(LPCTSTR name)
 {
 	EnumData2 data;
@@ -1211,6 +1272,26 @@ static BOOL CALLBACK EnumChildActivate(HWND hWnd, LPARAM lParam)
 	return TRUE;
 }
 
+static BOOL CALLBACK EnumViews(HWND hWnd, LPARAM lParam)
+{
+	CWindow wnd = hWnd;
+	CWindow wndParent;
+	EnumData3* data = (EnumData3*)lParam;
+
+	if (!wnd.IsWindow())
+		return FALSE;
+	if ((wndParent.m_hWnd = wnd.GetParent()) != data->hmdiClient)
+		return TRUE;
+	
+	ViewData* pData = (ViewData*)wnd.SendMessage(WM_CHILDGETDATA);
+	if (pData) {
+		if (pData->type == ViewType::VIEW_CHANNEL) {
+			data->views.Add(pData);
+		}
+	}
+	return TRUE;
+}
+
 BOOL CMainFrame::LoadUserSettings()
 {
 	CPrivateIniFile ini;
@@ -1230,12 +1311,15 @@ BOOL CMainFrame::LoadUserSettings()
 		m_port.Set((u_short)ini.GetInt(_T("settings"), _T("port"), 6667), true);
 		m_JoinChannel = ini.GetString(_T("settings"), _T("channel"), NULL, MAX_PATH);
 		res = ini.GetStringList(_T("settings"), _T("servers"), m_servers);
+		m_editor = ini.GetString(_T("settings"), _T("editor"), _T("notepad.exe"), MAX_PATH);
 		m_bAllowCTCP = ini.GetInt(_T("CTCP"), _T("AnswerCTCPQueries"),m_bAllowCTCP ? 1  : 0);
 		m_userinfo = ini.GetString(_T("CTCP"), _T("USERINFO"), m_userinfo, MAX_PATH);
 		m_bDarkMode = ini.GetInt(_T("appearance"), _T("darkmode"), m_bDarkMode ? 1 : 0);
 		mo.fore = ini.GetInt(_T("marquee"), _T("fore"), 0xffffff);
 		mo.back = ini.GetInt(_T("marquee"), _T("back"), 0x008000);
 		mo.Elapse = ini.GetInt(_T("marquee"), _T("Elapse"), 4);
+
+		res = m_port.Get(true) != 0;
 	}
 	return res;
 
@@ -1246,6 +1330,7 @@ BOOL CMainFrame::SaveUserSettings()
 	CPrivateIniFile ini;
 	BOOL res = FALSE;
 	CString path;
+	m_editor = m_pScriptView->m_editor;
 
 	path = m_path;
 	path += _T("no5irc.ini");
@@ -1258,7 +1343,9 @@ BOOL CMainFrame::SaveUserSettings()
 						if (ini.WriteString(_T("settings"), _T("server"), m_server)) {
 							if (ini.WriteInt(_T("settings"), _T("port"), (int)m_port.Get(true))) {
 								if (ini.WriteString(_T("settings"), _T("channel"), m_JoinChannel)) {
-									res = ini.WriteStringList(_T("settings"), _T("servers"), m_servers);
+									if (ini.WriteString(_T("settings"), _T("editor"), m_editor)) {
+										res = ini.WriteStringList(_T("settings"), _T("servers"), m_servers);
+									}
 								}
 							}
 						}
@@ -1296,7 +1383,7 @@ void CMainFrame::OnLogin()
 	dlg.m_pass = m_pass;
 	dlg.m_server = m_server;
 	dlg.m_JoinChannel = m_JoinChannel;
-	dlg.m_port = m_port;
+	dlg.m_port = m_port.Get(true) ? m_port : CPort(6667, true);
 	int nRes = dlg.DoModal();
 	if (nRes == IDOK) {
 		USES_CONVERSION;
@@ -1739,6 +1826,21 @@ void CMainFrame::OnSockRead(int error)
 				OnNotice(NULL, lines[i],true);
 				pView->AppendText(_T("\n"));
 			}
+			else if (!code.CompareNoCase(_T("MODE"))) { // fernando_ MODE fernando_ :+i or chanserv!chanserv@services. MODE ##channel +o fernando_
+				CString mode;
+				if (count2 == 4) {
+					mode = params[3];
+					nick = params[2];
+					OnUserMode(nick, mode);
+				}
+				else if (count2 > 4) {
+					channel = params[2];
+					mode = params[3];
+					nick = params[4];
+					OnUserChannelMode(channel,nick, mode);
+				}
+
+			}
 			else if (_wtoi(code)) {
 				OnUnknownCmd(lines[i]);
 			}
@@ -1976,6 +2078,53 @@ void CMainFrame::OnUserMode(LPCTSTR user, LPCTSTR modes)
 	pView->AppendText(msg + '\n');
 	CComBSTR ch = user, mo = modes;
 	m_pIrc->Fire_OnUserMode(ch, mo);
+}
+
+void CMainFrame::OnUserChannelMode(LPCTSTR channel, LPCTSTR user, LPCTSTR modes)
+{
+	CView* pView = GetActiveView();
+	CString msg;
+	CString t = GetTimeString();
+
+	pView->SetTextColor(Colors::GREY);
+	pView->AppendText(t);
+	pView->SetTextColor(Colors::BLACK);
+
+	msg = _T("MODE of "); msg += user; msg += _T("in channel "); msg += channel; msg += _T(" was set to: "); msg += modes;
+	pView->AppendText(msg + '\n');
+
+	// update tree view icon
+	CNo5TreeItem parent = m_tv.FindItem(channel, FALSE, TRUE);
+
+	if (!parent) {
+		parent = m_tv.FindItem(m_server, FALSE, FALSE);
+		if (parent) {
+			parent = m_tv.InsertItem(channel, 8, 8, parent, TVI_SORT);
+		}
+	}
+	ATLASSERT(!parent.IsNull());
+
+	if (parent) {
+		CString _user = user;
+		if (_user.Find(':') == 0) {
+			_user = _user.Right(_user.GetLength() - 1);
+		}
+
+		if (wcschr(modes, 'o')) {
+			// operator
+			parent = parent.FindItem(_user, FALSE, TRUE);
+			if (parent) {
+				parent.SetImage(2, 2);
+			}
+		}
+		if (wcschr(modes, 'v')) {
+			// voice
+			parent = parent.FindItem(_user, FALSE, TRUE);
+			if (parent) {
+				parent.SetImage(4, 4);
+			}
+		}
+	}
 }
 
 void CMainFrame::OnChannelCreationTime(LPCTSTR channel, time_t time)
@@ -2226,6 +2375,7 @@ void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg,bool scr
 		p->SetTextColor(fore);
 		p->SetTextBkColor(back);
 	}
+	str.Remove(':');
 	p->AppendText(str);
 	str = msg;
 	if (!m_bDarkMode) {
@@ -2313,6 +2463,7 @@ void CMainFrame::OnPrivateMsg(LPCTSTR from, LPCTSTR msg,bool script)
 			p->AppendText(from);
 			p->AppendText(_T(": "));
 			CString str = msg;
+			str.Remove(':');
 			p->SetSelEnd();
 			if (!m_nick.Compare(from)) {
 				fore = m_pfo->MyTextFore(false, false);
@@ -2379,12 +2530,15 @@ void CMainFrame::OnUserJoin(LPCTSTR channel, LPCTSTR user)
 	}
 	m_marquee.AddItem(msg);
 	if (true /*user != m_nick*/) {
-		CNo5TreeItem parent = m_tv.FindItem(channel, FALSE, TRUE);
+		CString ch = channel;
+
+		ch.Remove(':');
+		CNo5TreeItem parent = m_tv.FindItem(ch, FALSE, TRUE);
 
 		if (!parent) {
 			parent = m_tv.FindItem(m_server, FALSE, FALSE);
 			if (parent) {
-				parent = m_tv.InsertItem(channel,8,8, parent, TVI_SORT);
+				parent = m_tv.InsertItem(ch,8,8, parent, TVI_SORT);
 			}
 			ATLASSERT(!parent.IsNull());
 		}
@@ -2447,7 +2601,17 @@ void CMainFrame::OnUserPart(LPCTSTR channel, LPCTSTR user, LPCTSTR msg)
 	txt += _T(" leaves the channel: "); txt += channel; txt += ' '; txt += msg; txt += '\n';
 	p->AppendText(txt);
 	m_marquee.AddItem(txt);
-	m_tv.DeleteItem(user, TRUE, TRUE);
+	// update tree view
+	CNo5TreeItem parent = m_tv.FindItem(channel, TRUE, TRUE);
+	//ATLASSERT(!parent.IsNull());
+	if (!parent.IsNull()) {
+		parent = parent.FindItem(user, TRUE, FALSE);
+		//ATLASSERT(!parent.IsNull());
+		if (!parent.IsNull()) {
+			m_tv.DeleteItem(parent);
+		}
+	}
+	// fire
 	CComBSTR ch = channel, fr = user, m = msg;
 	m_pIrc->Fire_OnUserPart(ch, fr, m);
 }

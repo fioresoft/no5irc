@@ -34,6 +34,7 @@ public:
 		COMMAND_ID_HANDLER(IDC_BUTTON4, OnBtStop)
 		COMMAND_ID_HANDLER(IDC_BUTTON5, OnBtReload)
 		COMMAND_ID_HANDLER(IDC_BUTTON6, OnBtNew)
+		COMMAND_ID_HANDLER(IDC_BUTTON7,OnEditor)
 		CHAIN_MSG_MAP(CDialogResize<CScriptView>)
 	END_MSG_MAP()
 
@@ -47,6 +48,7 @@ public:
 		DLGRESIZE_CONTROL(IDC_BUTTON3, DLSZ_MOVE_Y)
 		DLGRESIZE_CONTROL(IDC_BUTTON5, DLSZ_MOVE_Y)
 		DLGRESIZE_CONTROL(IDC_BUTTON6, DLSZ_MOVE_Y)
+		DLGRESIZE_CONTROL(IDC_BUTTON7, DLSZ_MOVE_Y)
 	END_DLGRESIZE_MAP()
 
 	// Handler prototypes (uncomment arguments if needed):
@@ -64,6 +66,7 @@ public:
 	LRESULT OnBtStopAll(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnBtReload(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnBtNew(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnEditor(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 
 private:
 	CListBox m_lb1, m_lb2;
@@ -71,5 +74,7 @@ private:
 	void ReloadScriptList(void);
 	BOOL ReadScript(LPCTSTR file, CString& buf);
 	void ReleaseRunning(void);	// release running scripts
+public:
+	CPath m_editor;
 };
 

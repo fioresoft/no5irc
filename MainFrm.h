@@ -8,9 +8,11 @@
 #include "IIrc.h"
 #include "usermsgs.h"
 #include "View.h"
+#include "ChildFrm.h"
 #include "IFontOptions.h"
 #include "CFileSender.h"
 #include "CFileTransferMonitor.h"
+//#include "No5IrcObj.h"
 #include "CMyScriptSite.h"
 #include "CScriptsView.h"
 #ifdef NO5_SSL
@@ -375,6 +377,7 @@ private:
 	CComObject<CNo5IrcObj> *m_pIrc;
 	CComObject<CMyScriptSite>* m_pScriptSite;
 	CView m_output;
+	CPath m_editor;
 	//long m_timerid;
 	
 	//
@@ -403,6 +406,7 @@ public:
 	CView* CreatePrivateChannel(LPCTSTR name);
 	CView* CreateChannel(LPCTSTR name);
 	bool ActivateViewByName(LPCTSTR name);
+	int GetActiveViews(CSimpleArray<ViewData*>& data);
 public:
 	DECLARE_FRAME_WND_CLASS(NULL, IDR_MAINFRAME)
 	CMainFrame() :m_sock((ISocketEvents*)this),m_tab(*this),m_ChannelsView(m_lv,this),m_bottom(*this)
@@ -460,6 +464,7 @@ public:
 		MESSAGE_HANDLER(WM_ONFONTSIZECHANGE, OnFontSizeChange)
 		MESSAGE_HANDLER(WM_FINDUSER,OnFindUser)
 		MESSAGE_HANDLER(WM_TIMERMSG,OnTimerMsg)
+		MESSAGE_HANDLER(WM_GETUSERS,OnGetUsers)
 		COMMAND_ID_HANDLER(ID_APP_EXIT, OnFileExit)
 		COMMAND_ID_HANDLER(ID_FILE_NEW, OnFileNew)
 		COMMAND_ID_HANDLER(ID_FILE_SAVE,OnFileSave)
@@ -502,6 +507,7 @@ public:
 	LRESULT OnFontSizeChange(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnFindUser(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnTimerMsg(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
+	LRESULT OnGetUsers(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnFilePrint(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
@@ -548,6 +554,7 @@ public:
 	virtual void OnEndOfList();
 	virtual void OnChannelMode(LPCTSTR channel, LPCTSTR modes);
 	virtual void OnUserMode(LPCTSTR user, LPCTSTR modes);
+	virtual void OnUserChannelMode(LPCTSTR channel, LPCTSTR user, LPCTSTR modes);
 	virtual void OnChannelCreationTime(LPCTSTR channel, time_t time);
 	virtual void OnBeginMOTD(LPCTSTR channel);
 	virtual void OnMOTD(LPCTSTR channel, LPCTSTR msg);

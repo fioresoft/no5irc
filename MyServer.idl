@@ -35,7 +35,8 @@ interface INo5IrcObj : IDispatch
 	[id(17)] HRESULT WhoWas([in] BSTR nick);
 	[id(18)] HRESULT Output([in] BSTR msg);
 	[id(19)] HRESULT SetTimer([in] LONG id, [in] LONG ms, [out, retval] LONG* res);
-	[id(20)] HRESULT GetActiveViewName([out, retval] BSTR* res);
+	[propget,id(20)] HRESULT ActiveViewName([out, retval] BSTR* res);
+	[propget,id(21)] HRESULT Views([out, retval] IDispatch** ppDisp);
 };
 
 [
@@ -62,6 +63,31 @@ interface IUsers : IDispatch
 	[propget,id(1)] HRESULT Count([out,retval] long* pRet);
 	[propget,id(DISPID_VALUE)] HRESULT Item(long n,[out,retval]IDispatch** pVal);
 	[propget,id(DISPID_NEWENUM),restricted] HRESULT _NewEnum([out,retval]IUnknown** pVal);
+};
+
+[
+	object,
+	uuid(D4E08980-5650-4AD3-9257-2E3882AAD491),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IViews : IDispatch {
+	[propget, id(1)] HRESULT Count([out, retval] long* pCount);
+	[propget, id(DISPID_NEWENUM)] HRESULT _NewEnum([out, retval] IUnknown** ppEnum);
+	[propget, id(DISPID_VALUE)] HRESULT Item([in] long index, [out, retval] IDispatch** ppItem);
+};
+
+[
+	object,
+	uuid(0DE6B3AD-255F-4FE2-9EC1-D99693AB3503),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IView : IDispatch {
+	[propget, id(1)] HRESULT Name([out, retval] BSTR* pName);
+	[propget, id(2)] HRESULT Users([out, retval] IDispatch** ppDisp);
 };
 
 
@@ -119,6 +145,21 @@ library MyServerLib
 	coclass Users
 	{
 		[default] interface IUsers;
+	};
+
+	[
+		uuid(69DF3CBB-052B-4898-8E9F-A17AC1A6D1B2)
+	]
+	coclass Views
+	{
+		[default] interface IViews;
+	};
+	[
+		uuid(9310131C-1147-40C4-AC22-2A28DD5C14CF)
+	]
+	coclass Channel // CView was taken
+	{
+		[default] interface IView;
 	};
 
 };
