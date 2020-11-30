@@ -6,4 +6,5 @@ folder viksoe contains code that can be found here https://www.viksoe.dk/code/al
 folder NO5TL is my own template library    
 WTL can be found here https://sourceforge.net/projects/wtl/  
 This project makes use of OpenSSL which can be found here https://www.openssl.org/  
+The folder Unicode contains DLLs from DaeDoe Forms, which can be found here https://www.codeproject.com/Articles/12560/Form-Designer  
 The Oficial web page for this project is https://fioresoft.net  
