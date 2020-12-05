@@ -166,12 +166,19 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	CreateIrcObj();
 	CreateScriptSite();
 
+	m_FormsPath = (CString)m_path + _T("Forms\\");
+
 	CComQIPtr<IDispatch> sp;
 	HRESULT hr = m_pIrc->QueryInterface(&sp);
 	m_pScriptView = new CScriptView(sp);
 	m_pScriptView->m_editor = m_editor;
 	m_pScriptView->Create(m_tab, rcDefault);
 	m_tab.AddTab(m_pScriptView->m_hWnd, _T("scripts"));
+	//
+	m_FormList.Create(m_tab);
+	m_tab.AddTab(m_FormList, _T("Forms"));
+
+	
 
 	return 0;
 }
@@ -264,7 +271,7 @@ LRESULT CMainFrame::OnMDIActivate(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, B
 LRESULT CMainFrame::OnChannelsFileOpen(UINT, WPARAM, LPARAM, BOOL&)
 {
 	CString file = m_server + _T(".txt");
-	file = m_path + file;
+	file = (CString)m_path + file;
 	CFileDialog dlg(TRUE, _T("txt"), file,  OFN_NOCHANGEDIR | OFN_NONETWORKBUTTON | OFN_EXPLORER,
 		_T("text files\0*.txt\0\0\0\0"));
 	if (IDOK == dlg.DoModal()) {
@@ -314,7 +321,7 @@ LRESULT CMainFrame::OnChannelsFileOpen(UINT, WPARAM, LPARAM, BOOL&)
 LRESULT CMainFrame::OnChannelsFileSave(UINT, WPARAM, LPARAM, BOOL&)
 {
 	CString file = m_server + _T(".txt");
-	file = m_path + file;
+	file = (CString)m_path + file;
 	CFileDialog dlg(FALSE, _T("txt"),file, OFN_CREATEPROMPT | OFN_NOCHANGEDIR | OFN_NONETWORKBUTTON | OFN_OVERWRITEPROMPT | OFN_EXPLORER,
 		_T("text files\0*.txt\0\0\0\0"));
 	if (IDOK == dlg.DoModal()) {
@@ -537,6 +544,7 @@ LRESULT CMainFrame::OnViewOptions(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWn
 
 	pp.m_bAllowCTCP = m_bAllowCTCP ? true : false;
 	pp.m_userinfo = m_userinfo;
+	pp.m_bPingPong = m_bPingPong;
 
 	pp.Create();
 	fop.Create();
@@ -549,6 +557,7 @@ LRESULT CMainFrame::OnViewOptions(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWn
 		if (res == IDOK) {
 			m_bAllowCTCP = pp.m_bAllowCTCP ? TRUE : FALSE;
 			m_userinfo = pp.m_userinfo;
+			m_bPingPong = pp.m_bPingPong;
 		}
 	}
 	return 0;
@@ -1298,15 +1307,17 @@ BOOL CMainFrame::LoadUserSettings()
 	BOOL res = FALSE;
 	CString path;
 	CSimpleArray<CString> servers;
+	SimpleEncryptedData data;
+	TCHAR* p;
 
 	path = m_path;
-	path += _T("no5irc.ini");
+	path = path + _T("no5irc.ini");
 
 	if (ini.Create(path)) {
 		m_nick = ini.GetString(_T("settings"), _T("nick"), NULL, MAX_PATH);
 		m_user = ini.GetString(_T("settings"), _T("user"), NULL, MAX_PATH);
 		m_name = ini.GetString(_T("settings"), _T("real"), NULL, MAX_PATH);
-		m_pass = ini.GetString(_T("settings"), _T("pass"), NULL, MAX_PATH);
+		//m_pass = ini.GetString(_T("settings"), _T("pass"), NULL, MAX_PATH);
 		m_server = ini.GetString(_T("settings"), _T("server"), _T("irc.freenode.net"), MAX_PATH);
 		m_port.Set((u_short)ini.GetInt(_T("settings"), _T("port"), 6667), true);
 		m_JoinChannel = ini.GetString(_T("settings"), _T("channel"), NULL, MAX_PATH);
@@ -1318,8 +1329,24 @@ BOOL CMainFrame::LoadUserSettings()
 		mo.fore = ini.GetInt(_T("marquee"), _T("fore"), 0xffffff);
 		mo.back = ini.GetInt(_T("marquee"), _T("back"), 0x008000);
 		mo.Elapse = ini.GetInt(_T("marquee"), _T("Elapse"), 4);
+		m_bPingPong = ini.GetInt(_T("settings"), _T("hidepingpong"), m_bPingPong ? 1 : 0);
+		NO5TL::SimpleEncryptedData data;
+		
 
-		res = m_port.Get(true) != 0;
+		// read len
+		data.m_len = ini.GetInt(_T("settings"), _T("pwlen"), 0);
+		if (data.m_len) {
+			data.m_buf = new TCHAR[data.m_len];
+			ZeroMemory(data.m_buf, data.m_len * sizeof(TCHAR));
+			if (ini.GetStruct(_T("settings"), _T("password"), (void*)data.m_buf, data.m_len * sizeof(TCHAR))) {
+				LPTSTR p = m_pass.GetBuffer(data.m_len * sizeof(TCHAR));	// didnt need to be so big
+				ZeroMemory(p, data.m_len * sizeof(TCHAR));
+				NO5TL::Decrypt(data, p);
+				m_pass.ReleaseBuffer();
+			}
+		}
+
+		res = (m_port.Get(true) != 0);
 	}
 	return res;
 
@@ -1330,26 +1357,35 @@ BOOL CMainFrame::SaveUserSettings()
 	CPrivateIniFile ini;
 	BOOL res = FALSE;
 	CString path;
+	SimpleEncryptedData data;
 	m_editor = m_pScriptView->m_editor;
 
-	path = m_path;
+	path = (CString)m_path;
 	path += _T("no5irc.ini");
+
+	Encrypt(m_pass, data);
 
 	if (ini.Create(path)) {
 		if (ini.WriteString(_T("settings"), _T("nick"), m_nick)) {
 			if (ini.WriteString(_T("settings"), _T("user"), m_user)) {
 				if (ini.WriteString(_T("settings"), _T("real"), m_name)) {
-					if (ini.WriteString(_T("settings"), _T("pass"), m_pass)) {
+					//if (ini.WriteString(_T("settings"), _T("pass"), m_pass)) {
 						if (ini.WriteString(_T("settings"), _T("server"), m_server)) {
 							if (ini.WriteInt(_T("settings"), _T("port"), (int)m_port.Get(true))) {
 								if (ini.WriteString(_T("settings"), _T("channel"), m_JoinChannel)) {
 									if (ini.WriteString(_T("settings"), _T("editor"), m_editor)) {
 										res = ini.WriteStringList(_T("settings"), _T("servers"), m_servers);
+										if (res) {
+											res = ini.WriteStruct(_T("settings"), _T("data"), &data, lstrlen(data.m_buf) + sizeof(data.m_len));
+											if (res) {
+												res = ini.WriteInt(_T("settings"), _T("hidepingpong"), m_bPingPong ? 1 : 0);
+											}
+										}
 									}
 								}
 							}
 						}
-					}
+					//}
 				}
 			}
 		}
@@ -1367,6 +1403,13 @@ BOOL CMainFrame::SaveUserSettings()
 					res = ini.WriteInt(_T("marquee"), _T("elapse"), mo.Elapse);
 				}
 			}
+		}
+		if (res) {
+			NO5TL::SimpleEncryptedData data;
+			NO5TL::Encrypt(m_pass, data);
+			res = ini.WriteInt(_T("settings"), _T("pwlen"), data.m_len);
+			if (res)
+				res = ini.WriteStruct(_T("settings"), _T("password"), data.m_buf, data.m_len * sizeof(TCHAR));
 		}
 	}
 	return res;
@@ -2676,12 +2719,14 @@ void CMainFrame::OnPing(LPCTSTR code)
 {
 	CView* pView = GetActiveView();
 	CString t = GetTimeString();
-	pView->SetTextColor(Colors::GREY);
-	pView->AppendText(t);
-	pView->SetTextColor(Colors::BLACK);
 
 	Pong(code);
-	pView->AppendText(_T("ping received - pong returned\r\n"));
+	if (!m_bPingPong) {
+		pView->SetTextColor(Colors::GREY);
+		pView->AppendText(t);
+		pView->SetTextColor(Colors::BLACK);
+		pView->AppendText(_T("ping received - pong returned\r\n"));
+	}
 }
 void CMainFrame::OnUnknownCmd(LPCTSTR line)
 {

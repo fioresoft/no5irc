@@ -1,0 +1,921 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "atlres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Inglês (Estados Unidos) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""atlres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Toolbar
+//
+
+IDR_MAINFRAME TOOLBAR 16, 15
+BEGIN
+    BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_FILE_SAVE
+    SEPARATOR
+    BUTTON      ID_EDIT_CUT
+    BUTTON      ID_EDIT_COPY
+    BUTTON      ID_EDIT_PASTE
+    SEPARATOR
+    BUTTON      ID_FILE_PRINT
+    BUTTON      ID_APP_ABOUT
+END
+
+IDR_CHANNELSVIEW TOOLBAR 16, 15
+BEGIN
+    BUTTON      ID_FILE_SAVE
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_FILE_UPDATE
+END
+
+IDR_BOTTOM_FRAME TOOLBAR 16, 15
+BEGIN
+    BUTTON      ID_BUTTON32790
+    BUTTON      ID_BUTTON32791
+    BUTTON      ID_BUTTON32792
+    BUTTON      ID_BUTTON32793
+    BUTTON      ID_BUTTON32794
+    BUTTON      ID_BUTTON32795
+    BUTTON      ID_BUTTON32796
+    SEPARATOR
+    BUTTON      ID_BUTTON32798
+    BUTTON      ID_BUTTON32808
+    BUTTON      ID_BUTTON32809
+    SEPARATOR
+    BUTTON      ID_EDIT_BOLD
+    BUTTON      ID_EDIT_ITALIC
+    BUTTON      ID_EDIT_UNDERLINE
+    BUTTON      ID_BUTTON32802
+    BUTTON      ID_BUTTON32803
+    BUTTON      ID_BUTTON32804
+    SEPARATOR
+    BUTTON      ID_BUTTON32805
+    BUTTON      ID_BUTTON32806
+    BUTTON      ID_BUTTON32807
+END
+
+IDR_FORMFRAME TOOLBAR 16, 15
+BEGIN
+    BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_FILE_SAVE
+    SEPARATOR
+    BUTTON      ID_EDIT_CUT
+    BUTTON      ID_EDIT_COPY
+    BUTTON      ID_EDIT_PASTE
+END
+
+IDR_TOOLBAR2 TOOLBAR 16, 16
+BEGIN
+    BUTTON      ID_FRAME
+    BUTTON      ID_RECTANGLE
+    BUTTON      ID_PICTURE
+    BUTTON      ID_LABEL
+    BUTTON      ID_BUTTON
+    BUTTON      ID_CHECK
+    BUTTON      ID_RADIO
+    BUTTON      ID_TEXT
+    BUTTON      ID_COMBO
+    BUTTON      ID_LIST
+    BUTTON      ID_HSCROLL
+    BUTTON      ID_VSCROLL
+    SEPARATOR
+    BUTTON      ID_SPIN
+    BUTTON      ID_SLIDER
+    BUTTON      ID_PROGRESS
+    SEPARATOR
+    BUTTON      ID_ACTIVEX
+    SEPARATOR
+    BUTTON      ID_DELETE
+    SEPARATOR
+    BUTTON      ID_GRID
+    BUTTON      ID_GRID_SETTINGS
+    SEPARATOR
+    BUTTON      ID_TAB
+    SEPARATOR
+    BUTTON      ID_SELECT_ALL
+    BUTTON      ID_UNSELECT_ALL
+    SEPARATOR
+    BUTTON      ID_PROPERTIES
+END
+
+IDR_TOOLBAR3 TOOLBAR 16, 16
+BEGIN
+    BUTTON      ID_LEFT
+    BUTTON      ID_RIGHT
+    BUTTON      ID_UP
+    BUTTON      ID_DOWN
+    SEPARATOR
+    BUTTON      ID_LAYOUT_SENDTOBACK
+    BUTTON      ID_LAYOUT_BRINGTOFRONT
+    SEPARATOR
+    BUTTON      ID_ALIGN_LEFT
+    BUTTON      ID_ALIGN_RIGHT
+    BUTTON      ID_ALIGN_TOP
+    BUTTON      ID_ALIGN_BOTTOM
+    SEPARATOR
+    BUTTON      ID_SPACE_HORZ
+    BUTTON      ID_SPACE_VERT
+    SEPARATOR
+    BUTTON      ID_SIZE_LARGEST_WIDTH
+    BUTTON      ID_SIZE_LARGEST_HEIGHT
+    BUTTON      ID_SIZE_LARGEST
+    SEPARATOR
+    BUTTON      ID_SIZE_SMALLEST_WIDTH
+    BUTTON      ID_SIZE_SMALLEST_HEIGHT
+    BUTTON      ID_SIZE_SMALLEST
+    SEPARATOR
+    BUTTON      ID_CENTER_HORZ
+    BUTTON      ID_CENTER_VERT
+    BUTTON      ID_CENTER
+    SEPARATOR
+    BUTTON      ID_VALIDATE_SCRIPT
+    BUTTON      ID_PREVIEW_AUTO_SIZE
+    BUTTON      ID_PREVIEW
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
+
+IDR_CHANNELSVIEW        BITMAP                  "res\\channels.bmp"
+
+IDR_BOTTOM_FRAME        BITMAP                  "res\\toolbar4.bmp"
+
+IDR_FORMFRAME           BITMAP                  "res\\formfram.bmp"
+
+IDR_TOOLBAR1            BITMAP                  "res\\toolbar1.bmp"
+
+IDR_TOOLBAR2            BITMAP                  "res\\toolbar2.bmp"
+
+IDR_TOOLBAR3            BITMAP                  "res\\toolbar3.bmp"
+
+IDR_TOOLBAR4            BITMAP                  "res\\toolbar4.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINFRAME MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
+        MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
+        MENUITEM SEPARATOR
+        MENUITEM "&Print...\tCtrl+P",           ID_FILE_PRINT
+        MENUITEM "Print Pre&view",              ID_FILE_PRINT_PREVIEW
+        MENUITEM "P&rint Setup...",             ID_FILE_PRINT_SETUP
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO
+        MENUITEM SEPARATOR
+        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
+        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
+        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Inc Font",                    ID_EDIT_INCFONT
+        MENUITEM "Dec Font",                    ID_EDIT_DECFONT
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        MENUITEM "&Marquee Bar",                ID_VIEW_MARQUEE
+        MENUITEM SEPARATOR
+        MENUITEM "Options",                     ID_VIEW_OPTIONS
+        MENUITEM "Dark Mode",                   ID_VIEW_DARKMODE
+    END
+    POPUP "&Window"
+    BEGIN
+        MENUITEM "&Cascade",                    ID_WINDOW_CASCADE
+        MENUITEM "&Tile",                       ID_WINDOW_TILE_HORZ
+        MENUITEM "Arrange &Icons",              ID_WINDOW_ARRANGE
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "About NO5 IRC",               ID_APP_ABOUT
+    END
+END
+
+IDR_FORMFRAME MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
+        MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Undo\tCtrl+Z",               ID_UNDO
+        MENUITEM "&Redo\tCtrl+Y",               ID_REDO
+        MENUITEM SEPARATOR
+        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
+        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
+        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "&Delete\tDel",                ID_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "Select &All",                 ID_SELECT_ALL
+        MENUITEM "U&nselect All",               ID_UNSELECT_ALL
+        MENUITEM SEPARATOR
+        MENUITEM "Pr&operties...",              ID_PROPERTIES
+    END
+    POPUP "&Controls"
+    BEGIN
+        MENUITEM "&Frame",                      ID_FRAME
+        MENUITEM "&Rectangle",                  ID_RECTANGLE
+        MENUITEM "Pict&ure",                    ID_PICTURE
+        MENUITEM "&Label",                      ID_LABEL
+        MENUITEM "&Button",                     ID_BUTTON
+        MENUITEM "&Check Box",                  ID_CHECK
+        MENUITEM "R&adio Button",               ID_RADIO
+        MENUITEM "&Text Box",                   ID_TEXT
+        MENUITEM "C&ombo Box",                  ID_COMBO
+        MENUITEM "L&ist Box",                   ID_LIST
+        MENUITEM "&Horizontal Scrollbar",       ID_HSCROLL
+        MENUITEM "&Vertical Scrollbar",         ID_VSCROLL
+        MENUITEM SEPARATOR
+        MENUITEM "S&pin Control",               ID_SPIN
+        MENUITEM "Sli&der Control",             ID_SLIDER
+        MENUITEM "Pro&gress Bar Control",       ID_PROGRESS
+        MENUITEM SEPARATOR
+        MENUITEM "Other Active&X Control...",   ID_ACTIVEX
+    END
+    POPUP "&Layout"
+    BEGIN
+        MENUITEM "&Left",                       ID_LEFT
+        MENUITEM "&Right",                      ID_RIGHT
+        MENUITEM "&Up",                         ID_UP
+        MENUITEM "&Down",                       ID_DOWN
+        MENUITEM SEPARATOR
+        MENUITEM "Send To &Back",               ID_LAYOUT_SENDTOBACK
+        MENUITEM "Bring To &Front",             ID_LAYOUT_BRINGTOFRONT
+        MENUITEM SEPARATOR
+        POPUP "&Align"
+        BEGIN
+            MENUITEM "&Left",                       ID_ALIGN_LEFT
+            MENUITEM "&Right",                      ID_ALIGN_RIGHT
+            MENUITEM "&Top",                        ID_ALIGN_TOP
+            MENUITEM "&Bottom",                     ID_ALIGN_BOTTOM
+        END
+        POPUP "S&pace"
+        BEGIN
+            MENUITEM "&Horizontal",                 ID_SPACE_HORZ
+            MENUITEM "&Vertical",                   ID_SPACE_VERT
+        END
+        MENUITEM SEPARATOR
+        POPUP "Size Lar&gest"
+        BEGIN
+            MENUITEM "&Width",                      ID_SIZE_LARGEST_WIDTH
+            MENUITEM "&Height",                     ID_SIZE_LARGEST_HEIGHT
+            MENUITEM "&Both",                       ID_SIZE_LARGEST
+        END
+        POPUP "Size &Smallest"
+        BEGIN
+            MENUITEM "&Width",                      ID_SIZE_SMALLEST_WIDTH
+            MENUITEM "&Height",                     ID_SIZE_SMALLEST_HEIGHT
+            MENUITEM "&Both",                       ID_SIZE_SMALLEST
+        END
+        MENUITEM SEPARATOR
+        POPUP "&Center"
+        BEGIN
+            MENUITEM "&Horizontal",                 ID_CENTER_HORZ
+            MENUITEM "&Vertical",                   ID_CENTER_VERT
+            MENUITEM "&Both",                       ID_CENTER
+        END
+    END
+    POPUP "&Tools"
+    BEGIN
+        MENUITEM "Toggle &Grid",                ID_GRID
+        MENUITEM "Grid &Settings...",           ID_GRID_SETTINGS
+        MENUITEM SEPARATOR
+        MENUITEM "Set &Tab Order",              ID_TAB
+        MENUITEM SEPARATOR
+        MENUITEM "&Validate Script\tCtrl+Q",    ID_VALIDATE_SCRIPT
+        MENUITEM SEPARATOR
+        POPUP "&Preview"
+        BEGIN
+            MENUITEM "&Auto Sizing...",             ID_PREVIEW_AUTO_SIZE
+            MENUITEM "&None Auto Sizing...",        ID_PREVIEW
+        END
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\irc11.ico"
+
+IDR_MDICHILD            ICON                    "res\\logo4.ico"
+
+ID_EDIT_BOLD            ICON                    "res\\bold.ico"
+
+ID_EDIT_ITALIC          ICON                    "res\\italic.ico"
+
+ID_EDIT_UNDERLINE       ICON                    "res\\underline.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 210, 184
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About"
+FONT 9, "Segoe UI", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,156,162,50,14
+    CTEXT           "NO5 IRC Beta 0.6\n\n(c) Copyright 2020",IDC_STATIC2,25,57,78,82
+    ICON            IDR_MAINFRAME,IDC_STATIC,55,26,20,20
+    GROUPBOX        "",IDC_STATIC,7,7,115,170
+    CTEXT           "Estático",IDC_STATIC1,7,147,109,8
+END
+
+IDD_FORMVIEW2 DIALOG 0, 0, 250, 129
+STYLE DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Form"
+FONT 8, "MS Sans Serif"
+BEGIN
+END
+
+IDD_FORMLIST DIALOG 0, 0, 186, 146
+STYLE DS_SETFONT | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN
+FONT 8, "MS Sans Serif"
+BEGIN
+    LISTBOX         IDC_LIST1,7,7,172,112,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Edit",ID_FORM_EDIT,19,122,29,14
+    PUSHBUTTON      "Run",ID_FORM_RUN,58,122,29,14
+    PUSHBUTTON      "New",ID_FORM_NEW,97,122,29,14
+    PUSHBUTTON      "Reload",ID_FORM_RELOAD,136,122,29,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 203
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 177
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAINFRAME ACCELERATORS
+BEGIN
+    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL
+    "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL
+    "P",            ID_FILE_PRINT,          VIRTKEY, CONTROL
+    "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL
+    "X",            ID_EDIT_CUT,            VIRTKEY, CONTROL
+    "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL
+    "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL
+    VK_BACK,        ID_EDIT_UNDO,           VIRTKEY, ALT
+    VK_DELETE,      ID_EDIT_CUT,            VIRTKEY, SHIFT
+    VK_INSERT,      ID_EDIT_COPY,           VIRTKEY, CONTROL
+    VK_INSERT,      ID_EDIT_PASTE,          VIRTKEY, SHIFT
+    VK_F6,          ID_NEXT_PANE,           VIRTKEY 
+    VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,1,0,1
+ PRODUCTVERSION 1,1,0,2
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Fioresoft, est 1996"
+            VALUE "FileDescription", "NO5 IRC"
+            VALUE "FileVersion", "1.1.0.1"
+            VALUE "InternalName", "irc11"
+            VALUE "LegalCopyright", "Copyright 2020"
+            VALUE "OriginalFilename", "irc11.exe"
+            VALUE "ProductName", "NO5 IRC"
+            VALUE "ProductVersion", "1.1.0.2"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_ABOUTBOX AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDR_MAINFRAME           "NO5 IRC"
+    IDR_MDICHILD            "Document"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FILE_NEW             "Connect to a server\nConnect"
+    ID_FILE_OPEN            "Open an existing document\nOpen"
+    ID_FILE_CLOSE           "Close the active document\nClose"
+    ID_FILE_SAVE            "Save the active document\nSave"
+    ID_FILE_SAVE_AS         "Save the active document with a new name\nSave As"
+    ID_FILE_PAGE_SETUP      "Change the printing options\nPage Setup"
+    ID_FILE_PRINT_SETUP     "Change the printer and printing options\nPrint Setup"
+    ID_FILE_PRINT           "Print the active document\nPrint"
+    ID_FILE_PRINT_PREVIEW   "Display full pages\nPrint Preview"
+    ID_FILE_UPDATE          "Update Channels\nUpdate"
+END
+
+STRINGTABLE
+BEGIN
+    ID_APP_ABOUT            "Display program information, version number and copyright\nAbout"
+    ID_APP_EXIT             "Quit the application; prompts to save documents\nExit"
+END
+
+STRINGTABLE
+BEGIN
+    ID_NEXT_PANE            "Switch to the next window pane\nNext Pane"
+    ID_PREV_PANE            "Switch back to the previous window pane\nPrevious Pane"
+END
+
+STRINGTABLE
+BEGIN
+    ID_WINDOW_NEW           "Open another window for the active document\nNew Window"
+    ID_WINDOW_ARRANGE       "Arrange icons at the bottom of the window\nArrange Icons"
+    ID_WINDOW_CASCADE       "Arrange windows so they overlap\nCascade Windows"
+    ID_WINDOW_TILE_HORZ     "Arrange windows as non-overlapping tiles\nTile Windows"
+    ID_WINDOW_TILE_VERT     "Arrange windows as non-overlapping tiles\nTile Windows"
+    ID_WINDOW_SPLIT         "Split the active window into panes\nSplit"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_CLEAR           "Erase the selection\nErase"
+    ID_EDIT_CLEAR_ALL       "Erase everything\nErase All"
+    ID_EDIT_COPY            "Copy the selection and put it on the Clipboard\nCopy"
+    ID_EDIT_CUT             "Cut the selection and put it on the Clipboard\nCut"
+    ID_EDIT_FIND            "Find the specified text\nFind"
+    ID_EDIT_PASTE           "Insert Clipboard contents\nPaste"
+    ID_EDIT_REPEAT          "Repeat the last action\nRepeat"
+    ID_EDIT_REPLACE         "Replace specific text with different text\nReplace"
+    ID_EDIT_SELECT_ALL      "Select the entire document\nSelect All"
+    ID_EDIT_UNDO            "Undo the last action\nUndo"
+    ID_EDIT_REDO            "Reload"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_TOOLBAR         "Show or hide the toolbar\nToggle ToolBar"
+    ID_VIEW_STATUS_BAR      "Show or hide the status bar\nToggle StatusBar"
+END
+
+STRINGTABLE
+BEGIN
+    ATL_IDS_SCSIZE          "Change the window size"
+    ATL_IDS_SCMOVE          "Change the window position"
+    ATL_IDS_SCMINIMIZE      "Reduce the window to an icon"
+    ATL_IDS_SCMAXIMIZE      "Enlarge the window to full size"
+    ATL_IDS_SCNEXTWINDOW    "Switch to the next document window"
+    ATL_IDS_SCPREVWINDOW    "Switch to the previous document window"
+    ATL_IDS_SCCLOSE         "Close the active window and prompts to save the documents"
+END
+
+STRINGTABLE
+BEGIN
+    ATL_IDS_SCRESTORE       "Restore the window to normal size"
+    ATL_IDS_SCTASKLIST      "Activate Task List"
+    ATL_IDS_MDICHILD        "Activate this window"
+END
+
+STRINGTABLE
+BEGIN
+    ATL_IDS_IDLEMESSAGE     "Ready"
+END
+
+STRINGTABLE
+BEGIN
+    ATL_IDS_MRU_FILE        "Open this document"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_DARKMODE        "Sets / removes Dark Mode\nDark Mode"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_BOLD            "Toggle Bold\nBold"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_ITALIC          "Togggles Italic\nItalic"
+    ID_EDIT_UNDERLINE       "Toggles Underline\nUnderline"
+    IDC_FORE                "Selects the foregorund Colour\nForeground Colour"
+    IDC_BACK                "Selects the Background Colour\nBackground Color"
+END
+
+STRINGTABLE
+BEGIN
+    IDC_COMBO_FONTS         "Select the Font for the active view\nFont"
+END
+
+STRINGTABLE
+BEGIN
+    ID_BUTTON               "Insert a button\nButton"
+    ID_CHECK                "Insert a check box\nCheck Box"
+    ID_COMBO                "Insert a combo box\nCombo Box"
+    ID_LIST                 "Insert a list box\nList Box"
+    ID_SPIN                 "Insert a spin control\nSpin Control"
+    ID_SLIDER               "Insert a slider control\nSlider Control"
+    ID_PROGRESS             "Insert a progress bar control\nProgress Bar Control"
+    ID_ACTIVEX              "Insert an ActiveX control\nActiveX"
+    ID_DELETE               "Delete the currently selected items\nDelete [Del]"
+    ID_GRID                 "Toggle the grid\nToggle Grid"
+    ID_GRID_SETTINGS        "Show the grid settings dialog\nGrid Settings"
+    ID_TAB                  "Switch the form editor into tab ordering mode\nSet Tab Order"
+    ID_SELECT_ALL           "Select all items\nSelect All"
+    ID_UNSELECT_ALL         "Unselect all items\nUnselect All"
+END
+
+STRINGTABLE
+BEGIN
+    ID_PROPERTIES           "Show the properties dialog for the current selection\nProperties"
+    ID_LEFT                 "Move selected items left by a single pixel\nLeft"
+    ID_RIGHT                "Move selected items right by a single pixel\nRight"
+    ID_UP                   "Move selected items up by a single pixel\nUp"
+    ID_DOWN                 "Move selected items down by a single pixel\nDown"
+    ID_ALIGN_LEFT           "Align selected items to the left most\nAlign Left"
+    ID_ALIGN_RIGHT          "Align selected items to the right most\nAlign Right"
+    ID_ALIGN_TOP            "Align selected items to the top most\nAlign Top"
+    ID_ALIGN_BOTTOM         "Align selected items to the bottom most\nAlign Bottom"
+    ID_SPACE_HORZ           "Space selected items horizontally\nSpace Horz"
+    ID_SPACE_VERT           "Space selected items vertically\nSpace Vert"
+    ID_SIZE_LARGEST_WIDTH   "Size selected items to the largest width\nSize Largest Width"
+    ID_SIZE_LARGEST_HEIGHT  "Size selected items to the largest height\nSize Largest Height"
+    ID_SIZE_LARGEST         "Size selected items to the largest\nSize Largest"
+    ID_SIZE_SMALLEST_WIDTH  "Size selected items to the smallest width\nSize Smallest Width"
+    ID_SIZE_SMALLEST_HEIGHT "Size selected items to the smallest height\nSize Smallest Height"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SIZE_SMALLEST        "Size selected items to the smallest\nSize Smallest"
+    ID_CENTER_HORZ          "Align selected items to the form horizontal center\nCenter Horz"
+    ID_CENTER_VERT          "Align selected items to the form vertical center\nCenter Vert"
+    ID_CENTER               "Align selected items to the form center\nCenter"
+    ID_VALIDATE_SCRIPT      "Check the script for errors\nValidate Script [Ctrl+Q]"
+    ID_PREVIEW_AUTO_SIZE    "Show an auto sized  preview of the form\nPreview (Auto Sizing)"
+    ID_PREVIEW              "Show a preview of the form\nPreview (None Auto Sizing)"
+END
+
+#endif    // Inglês (Estados Unidos) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Português (Brasil) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_PTB)
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU1 MENU
+BEGIN
+    POPUP "User"
+    BEGIN
+        MENUITEM "Send Version Request",        ID_USER_SENDVERSIONREQUEST
+        MENUITEM "Send USERINFO Request",       ID_USER_SENDUSERINFOREQUEST
+        MENUITEM "Send PING request",           ID_USER_SENDPINGREQUEST
+        MENUITEM "Send TIME request",           ID_USER_SENDTIMEREQUEST
+        MENUITEM "Who Is",                      ID_USER_WHOIS
+        MENUITEM "Who",                         ID_USER_WHO
+        MENUITEM SEPARATOR
+        MENUITEM "Send File",                   ID_USER_SENDFILE
+        MENUITEM "Chat",                        ID_USER_CHAT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON2               ICON                    "res\\19.ico"
+
+IDI_ICON3               ICON                    "res\\4.ico"
+
+IDI_ICON4               ICON                    "res\\16.ico"
+
+IDI_ICON5               ICON                    "res\\17.ico"
+
+IDI_ICON6               ICON                    "res\\21.ico"
+
+IDI_ICON7               ICON                    "res\\23.ico"
+
+IDI_ICON8               ICON                    "res\\10.ico"
+
+IDI_FORMS               ICON                    "res\\forms.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_AUTOCOMPLETE DIALOGEX 0, 0, 148, 177
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_BORDER
+EXSTYLE WS_EX_PALETTEWINDOW
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LISTBOX         IDC_LIST1,7,7,134,163,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_DIALOG2 DIALOGEX 0, 0, 309, 176
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_EDIT1,45,16,129,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,51,46,123,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT3,48,72,127,14,ES_AUTOHSCROLL
+    COMBOBOX        IDC_COMBO2,49,118,129,241,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_EDIT6,210,115,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT5,58,140,120,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,198,155,50,14
+    PUSHBUTTON      "Cancelar",IDCANCEL,252,155,50,14
+    LTEXT           "Nickname:",IDC_STATIC,7,20,33,8
+    LTEXT           "Real Name:",IDC_STATIC,7,48,42,8
+    LTEXT           "Server:",IDC_STATIC,7,118,25,8
+    LTEXT           "User:",IDC_STATIC,6,72,18,8
+    LTEXT           "Password: ",IDC_STATIC,6,96,36,8
+    LTEXT           "Initial Channel",IDC_STATIC,7,141,46,8
+    LTEXT           "Port:",IDC_STATIC,186,120,18,8
+    CONTROL         "Is  SSL Port ?",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,190,136,96,16
+    EDITTEXT        IDC_EDIT4,49,94,131,15,ES_PASSWORD | ES_AUTOHSCROLL
+END
+
+IDD_PROPPAGE_SMALL DIALOGEX 0, 0, 195, 127
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Página de Propriedades"
+FONT 8, "MS Shell Dlg", 400, 0, 0x0
+BEGIN
+    CONTROL         "Answer CTCP queries",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,7,182,10
+    LTEXT           "USERINFO:",IDC_STATIC,6,24,36,8
+    EDITTEXT        IDC_EDIT1,6,36,186,14,ES_AUTOHSCROLL
+    CONTROL         "Hide ping/pong messages",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,60,186,18
+END
+
+IDD_PROPPAGE_SMALL1 DIALOGEX 0, 0, 195, 120
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Página de Propriedades"
+FONT 8, "MS Shell Dlg", 400, 0, 0x0
+BEGIN
+    GROUPBOX        "Items",IDC_STATIC,6,12,184,78
+    COMBOBOX        IDC_COMBO1,12,24,102,74,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Font Color",IDC_STATIC,6,42,34,8
+    PUSHBUTTON      "Choose",IDC_BUTTON2,84,42,50,12
+    PUSHBUTTON      "Default",IDC_BUTTON3,138,42,50,12
+    LTEXT           "Font Back Color",IDC_STATIC,6,60,51,8
+    PUSHBUTTON      "Choose",IDC_BUTTON4,84,60,50,12
+    PUSHBUTTON      "Default",IDC_BUTTON5,138,60,50,14
+    PUSHBUTTON      "Reset Defaults",IDC_BUTTON1,9,2,60,11
+    LTEXT           "Estático",IDC_STATIC1,6,96,185,23
+END
+
+IDD_SCRIPTS DIALOGEX 0, 0, 213, 196
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    PUSHBUTTON      "Run",IDC_BUTTON1,7,70,34,14
+    PUSHBUTTON      "Edit",IDC_BUTTON2,45,70,34,14
+    PUSHBUTTON      "Stop all",IDC_BUTTON3,60,175,50,14
+    LISTBOX         IDC_LIST1,7,5,199,60,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "running scripts:",IDC_STATIC1,7,95,160,8
+    LISTBOX         IDC_LIST2,7,110,169,60,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Stop",IDC_BUTTON4,7,175,50,14
+    PUSHBUTTON      "Reload",IDC_BUTTON5,85,70,34,14
+    PUSHBUTTON      "New",IDC_BUTTON6,125,70,34,14
+    PUSHBUTTON      "Editor",IDC_BUTTON7,168,70,38,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_AUTOCOMPLETE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 141
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 170
+    END
+
+    IDD_DIALOG2, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 302
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 169
+    END
+
+    IDD_PROPPAGE_SMALL, DIALOG
+    BEGIN
+    END
+
+    IDD_PROPPAGE_SMALL1, DIALOG
+    BEGIN
+    END
+
+    IDD_SCRIPTS, DIALOG
+    BEGIN
+        RIGHTMARGIN, 176
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_AUTOCOMPLETE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_DIALOG2 AFX_DIALOG_LAYOUT
+BEGIN
+    0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 100,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0
+END
+
+IDD_PROPPAGE_SMALL AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_PROPPAGE_SMALL1 AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SCRIPTS AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// REGISTRY
+//
+
+IDR_REGISTRY1           REGISTRY                "No5IrcObj.rgs"
+
+#endif    // Português (Brasil) resources
+/////////////////////////////////////////////////////////////////////////////
+
+

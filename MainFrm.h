@@ -12,6 +12,7 @@
 #include "IFontOptions.h"
 #include "CFileSender.h"
 #include "CFileTransferMonitor.h"
+#include "FormList.h"
 //#include "No5IrcObj.h"
 #include "CMyScriptSite.h"
 #include "CScriptsView.h"
@@ -349,13 +350,13 @@ private:
 	CListViewCtrl m_lv;
 	CMarqueeWnd m_marquee;
 	CChannelsViewFrame m_ChannelsView;
+	CFormList m_FormList;
 	CString m_server;
 	CPort m_port;
 	CString m_nick;
 	CString m_name;
 	CString m_user;
 	CString m_pass;
-	CPath m_path;
 	CStringArray m_servers;
 	CString m_NameOrChannel;
 	bool m_bInChannel;
@@ -374,11 +375,16 @@ private:
 	CPointerArray<CFileReceiver> m_receivers;
 	CFileTransferMonitor m_ftMonitor;
 	CSimpleMap<CString, IDCCChat*> m_Chats;
-	CComObject<CNo5IrcObj> *m_pIrc;
 	CComObject<CMyScriptSite>* m_pScriptSite;
 	CView m_output;
 	CPath m_editor;
+	bool m_bPingPong;	// hide ping-pong messages?
 	//long m_timerid;
+public:
+	CComObject<CNo5IrcObj>* m_pIrc;
+	CPath m_path;
+	CPath m_FormsPath;
+private:
 	
 	//
 	void CreateTreeView();
@@ -430,6 +436,7 @@ public:
 		m_pScriptSite = NULL;
 		m_pIrc = NULL;
 		m_pScriptView = NULL;
+		m_bPingPong = true; // hide
 		//m_timerid = 1;
 		//
 		//m_CmdBar.m_hIconChildMaximized = LoadIcon(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));

@@ -21,11 +21,15 @@ public:
 	bool m_bAllowCTCP;
 	int m_iAllowCTCP;
 	CString m_userinfo;
+	int m_iPingPong;
+	bool m_bPingPong;
 public:
 	COptionsDlgPage():_baseClass(_T("CTCP"))
 	{
 		m_bAllowCTCP = false;
 		m_iAllowCTCP = BST_UNCHECKED;
+		m_iPingPong = BST_CHECKED;
+		m_bPingPong = true;
 		//BOOL2BST(m_iAllowCTCP,m_bAllowCTCP);
 	}
 
@@ -34,11 +38,13 @@ public:
 	BEGIN_DDX_MAP(COptionsDlgPage)
 		DDX_CHECK(IDC_CHECK1, m_iAllowCTCP)
 		DDX_TEXT(IDC_EDIT1, m_userinfo)
+		DDX_CHECK(IDC_CHECK2,m_iPingPong)
 	END_DDX_MAP()
 
 	BEGIN_MSG_MAP(COptionsDlg)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
 		COMMAND_ID_HANDLER(IDC_CHECK1, OnCheck)
+		COMMAND_ID_HANDLER(IDC_CHECK2, OnCheck)
 		COMMAND_CODE_HANDLER(EN_CHANGE,OnEditChange)
 		//FORWARD_NOTIFICATIONS();
 		CHAIN_MSG_MAP(_baseClass)
@@ -47,6 +53,7 @@ public:
 	LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL& bHandled)
 	{
 		BOOL2BST(m_iAllowCTCP, m_bAllowCTCP);
+		BOOL2BST(m_iPingPong, m_bPingPong);
 		DoDataExchange(DDX_LOAD);
 		bHandled = FALSE;
 		return 0;
@@ -72,6 +79,7 @@ public:
 	{
 		DoDataExchange(DDX_SAVE);
 		BST2BOOL(m_iAllowCTCP, m_bAllowCTCP);
+		BST2BOOL(m_iPingPong, m_bPingPong);
 		return PSNRET_NOERROR;
 	}
 	LRESULT OnCheck(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
