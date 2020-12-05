@@ -14,14 +14,14 @@ namespace NO5TL
 
 struct SimpleEncryptedData
 {
-	char *m_buf;
+	TCHAR *m_buf;
 	int m_len;
 	SimpleEncryptedData()
 	{
 		m_buf = NULL;
 		m_len = 0;
 	}
-	SimpleEncryptedData(char *buf,int len)
+	SimpleEncryptedData(TCHAR *buf,int len)
 	{
 		m_buf = buf;
 		m_len = len;
@@ -40,31 +40,31 @@ struct SimpleEncryptedData
 	}
 };
 
-inline void Encrypt(LPCSTR p,SimpleEncryptedData &data)
+inline void Encrypt(LPCTSTR p,SimpleEncryptedData &data)
 {
 	int i,j;
-	char key;
+	TCHAR key;
 	
 	ATLASSERT(data.m_buf == NULL);
 	data.m_len = 2 * lstrlen(p);
-	data.m_buf = new char[data.m_len];
+	data.m_buf = new TCHAR[data.m_len * sizeof(TCHAR)];
 
 	srand(GetTickCount());
 
 	for(i=0,j=0;i<lstrlen(p);i++,j+=2){
-		key = ((unsigned char)(rand() % 127) + ( unsigned char )(GetTickCount() % 127)) % 255;
+		key = ((TCHAR)(rand() % 127) + ( TCHAR )(GetTickCount() % 127)) % 255;
 		key = ( key == 0 ) ? 0xab : key;
-		data.m_buf[j] = key;
-		data.m_buf[j+1] = key ^ p[i];
+		data.m_buf[j] = (TCHAR)key;
+		data.m_buf[j+1] = (TCHAR)(key ^ p[i]);
 	}
 }
 
 // p must have half of the size of data.len + 2
-inline void Decrypt(const SimpleEncryptedData &data,char *p)
+inline void Decrypt(const SimpleEncryptedData &data,TCHAR *p)
 {
 	int i,j;
-	char key;
-	char val;
+	TCHAR key;
+	TCHAR val;
 
 	for(i=0,j=0;j<data.m_len;i++,j+=2){
 		key = data.m_buf[j];
