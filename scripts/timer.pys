@@ -1,0 +1,8 @@
+import datetime
+from time import localtime, strftime
+id = no5.SetTimer(1,2000)
+
+def no5_OnTimer( timer ):
+	no5.Output(strftime("%H:%M:%S",localtime()))
+
+

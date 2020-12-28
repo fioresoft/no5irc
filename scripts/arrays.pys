@@ -1,0 +1,8 @@
+views = no5.Views
+count = views.Count
+for view in views:
+	no5.Output(view.Name)
+	users = view.Users
+	for user in users:
+		no5.Output("  " + user.Name)
+

@@ -1,0 +1,3 @@
+import platform
+#no5.SendActiveChannelMsg(sys.version_info)
+no5.SendActiveChannelMsg("using Python version: " + platform.python_version() + "\r\n")
