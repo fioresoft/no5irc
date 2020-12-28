@@ -1,6 +1,8 @@
 #pragma once
 #include "No5IrcObj.h"
 
+void GetScriptEngines(CSimpleArray<CString>& vv);
+
 class ATL_NO_VTABLE CMyScriptSite :
 	public CComObjectRootEx<CComSingleThreadModel>,
 	public CScriptSiteImpl
@@ -16,9 +18,9 @@ public:
 		COM_INTERFACE_ENTRY(IActiveScriptSite)
 		COM_INTERFACE_ENTRY(IActiveScriptSiteWindow)
 	END_COM_MAP()
-	HRESULT Init(CComPtr<IDispatch> spNo5) {
+	HRESULT Init(CComPtr<IDispatch> spNo5,LPCTSTR lang) {
 		m_spNo5 = spNo5;
-		HRESULT hr = Initiate(_T("vbscript"), GetDesktopWindow());
+		HRESULT hr = Initiate(lang, GetDesktopWindow());
 		if (SUCCEEDED(hr)) {
 			hr = AddObject(_T("no5"), TRUE, TRUE);
 		}

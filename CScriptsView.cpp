@@ -46,7 +46,7 @@ LRESULT CScriptView::OnList1DClick(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hW
 		CString sFile;
 		CSimpleArray<CString> languages;
 
-		GetScriptEngines(languages);
+		//GetScriptEngines(languages);
 
 		if (m_lb1.GetText(idx, sFile) > 0) {
 			CPath path = sFile;
@@ -67,12 +67,15 @@ LRESULT CScriptView::OnList1DClick(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hW
 					lang = _T("php");
 				}
 			}
-			/*CString s = "supported languages:\n";
+			else if (!ext.CompareNoCase(_T(".pys"))) {
+				lang = _T("Python");
+			}
+			CString s = "supported languages:\n";
 			for (int i = 0; i < languages.GetSize(); i++) {
 				s += languages[i];
 				s += '\n';
 			}
-			MessageBox(s);*/
+			//MessageBox(s);
 			if (SUCCEEDED(hr)) {
 				CComQIPtr<IActiveScriptSite> sp;
 				hr = pObj->QueryInterface(&sp);
@@ -153,7 +156,7 @@ LRESULT CScriptView::OnBtEdit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl
 	int idx = m_lb1.GetCurSel();
 	if (idx >= 0) {
 		CString sFile;
-		CPath path = m_scriptsFolder + sFile;
+		CPath path = (CString)m_scriptsFolder + sFile;
 
 		if (m_lb1.GetText(idx, sFile) > 0) {
 			ShellExecute(m_hWnd, _T("open"), m_editor,_T(" ") + sFile, m_scriptsFolder, SHOW_OPENWINDOW);
@@ -224,7 +227,7 @@ void CScriptView::ReloadScriptList(void)
 	WIN32_FIND_DATA f = { 0 };
 	HANDLE hFind = NULL;
 	CString sSearch;
-	LPCTSTR exts[] = { _T("*.vbs"),_T("*.js") };
+	LPCTSTR exts[] = { _T("*.vbs"),_T("*.js"),_T("*.pys") };
 	const int count = sizeof(exts) / sizeof(exts[0]);
 
 	m_lb1.ResetContent();
