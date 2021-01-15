@@ -1,0 +1,84 @@
+#start your text with .ud word-here to search the urbandictionary
+#start your text with .wik word-here to get wikipedia definition
+from bs4 import BeautifulSoup
+import requests
+import string
+
+def ud( term ):
+    term.strip()
+    payload = "term=%s" %(term)
+    no5.Output(payload)
+    url = "https://urbandictionary.com/define.php?term=%s" %(term)
+    req = requests.get(url)
+    soup = BeautifulSoup(req.text,"html.parser")
+    elems = soup.find('div',{'class':'meaning'})
+    s = ""
+    for e in elems:
+        if isinstance(e.string, str):
+            if type(e) is not None:
+                s += e.string
+    no5.Output(s)
+    return s
+
+def wik(term):
+    term.strip()
+    url = "https://en.wikipedia.org/wiki/%s" % fixterm(term)
+    req = requests.get(url)
+    # print(req.url)
+    # print(req.text)
+    soup = BeautifulSoup(req.text, "html.parser")
+    elems = soup.find_all('p', recursive=True)
+    # print(elems)
+    s = ""
+    for e in elems:
+        # print(e)
+        # e.string.strip()
+        if type(e.string) is not None:
+            if isinstance(e.string, str):
+                e.string.strip("\r\n\t ")
+                s += e.string
+
+            else:
+                for f in e.children:
+                    if isinstance(f.string, str):
+                        f.string.strip("\r\n\t ")
+                        s += f.string
+    print(s)
+    return s
+	
+def no5_OnChannelMsg(channel,user,msg):
+    if(msg.startswith(".ud ")):
+        count = len(msg)
+		###########
+        if(count > 4):
+            s = ud(msg[4:count])
+            no5.Output(s)
+            no5.SendChannelMsg(channel,s[0:510] + "\r\n")
+        else:
+            return
+    elif(msg.startswith(".wik ")):
+        count = len(msg)
+		###########
+        if(count > 5):
+            no5.Output(msg[5:count] + "\r\n")
+            s = wik(msg[5:count].strip())
+            no5.Output(s)
+            no5.SendChannelMsg(channel,s[0:510] + "\r\n")
+        else:
+            return
+def fixterm(term):
+    s = ""
+    bCapital = True
+    for ch in term:
+        if(bCapital):
+            ch = str.upper(ch)
+        if ch in string.whitespace:
+            ch = '_'
+            bCapital = True
+        else:
+            bCapital = False
+        s += ch
+    return s
+			
+        
+	
