@@ -2,11 +2,14 @@
 
 #pragma once
 #include "stdafx.h"
-#include "..\NO5TL\no5tlbase.h"
 #include "resource.h"       // símbolos principais
-#include "irc11.h"
+#include "..\NO5TL\no5tlbase.h"
+#include "irc12.h"
 #include "IIRCEvents.h"
 #include "_INo5IrcObjEvents_CP.h"
+#include "usermsgs.h"
+#include "MarqueeOptions.h"
+
 
 
 
@@ -25,28 +28,30 @@ class ATL_NO_VTABLE CNo5IrcObj :
 	public CProxy_INo5IrcObjEvents<CNo5IrcObj>,
 	public ISupportErrorInfo,
 	public IConnectionPointContainerImpl<CNo5IrcObj>,
-	public IProvideClassInfo2Impl<&CLSID_No5IrcObj,&DIID__INo5IrcObjEvents>,
+	public IProvideClassInfo2Impl<&CLSID_No5IrcObj, &DIID__INo5IrcObjEvents>,
 	public IDispatchImpl<INo5IrcObj, &IID_INo5IrcObj>,
 	public IDispatchImpl<_INo5IrcObjEvents, &__uuidof(_INo5IrcObjEvents)>
 {
 	IIrc* m_pirc;
 	IIRCEvents* m_pircevts;
 	CString m_nick;
+	int m_iMarquee;
 public:
 	CNo5IrcObj()
 	{
+		m_iMarquee = 0;
 		m_pirc = NULL;
 		m_pircevts = NULL;
 	}
-	void Init(IIrc* pIrc, IIRCEvents *pEvents,LPCTSTR nick) {
+	void Init(IIrc* pIrc, IIRCEvents* pEvents, LPCTSTR nick) {
 		ITypeLib* ptl = NULL;
 		m_pirc = pIrc;
 		m_pircevts = pEvents;
 		m_nick = nick;
-		HRESULT hr = LoadTypeLib(OLESTR("irc11.tlb"), &ptl);
+		HRESULT hr = LoadTypeLib(OLESTR("irc12.tlb"), &ptl);
 		if (SUCCEEDED(hr)) {
 			ptl->Release();
-			hr = UpdateRegistry(FALSE);
+			//hr = UpdateRegistry(FALSE);
 		}
 		ATLASSERT(SUCCEEDED(hr));
 		if (FAILED(hr)) {
@@ -54,25 +59,26 @@ public:
 		}
 	}
 
-DECLARE_REGISTRY_RESOURCEID(IDR_NO5IRCOBJ)
+	//DECLARE_REGISTRY_RESOURCEID(IDR_NO5IRCOBJ)
+	DECLARE_REGISTRY_RESOURCEID(IDR_REGISTRY1)
 
-DECLARE_NOT_AGGREGATABLE(CNo5IrcObj)
+	DECLARE_NOT_AGGREGATABLE(CNo5IrcObj)
 
-BEGIN_COM_MAP(CNo5IrcObj)
-	COM_INTERFACE_ENTRY(INo5IrcObj)
-	COM_INTERFACE_ENTRY2(IDispatch, INo5IrcObj)
-	COM_INTERFACE_ENTRY(ISupportErrorInfo)
-	COM_INTERFACE_ENTRY_IMPL(IConnectionPointContainer)
-	COM_INTERFACE_ENTRY(IProvideClassInfo)
-	COM_INTERFACE_ENTRY(IProvideClassInfo2)
-	//COM_INTERFACE_ENTRY(IConnectionPointContainer)
-	COM_INTERFACE_ENTRY(_INo5IrcObjEvents)
-END_COM_MAP()
+	BEGIN_COM_MAP(CNo5IrcObj)
+		COM_INTERFACE_ENTRY(INo5IrcObj)
+		COM_INTERFACE_ENTRY2(IDispatch, INo5IrcObj)
+		COM_INTERFACE_ENTRY(ISupportErrorInfo)
+		COM_INTERFACE_ENTRY_IMPL(IConnectionPointContainer)
+		COM_INTERFACE_ENTRY(IProvideClassInfo)
+		COM_INTERFACE_ENTRY(IProvideClassInfo2)
+		//COM_INTERFACE_ENTRY(IConnectionPointContainer)
+		COM_INTERFACE_ENTRY(_INo5IrcObjEvents)
+	END_COM_MAP()
 
-BEGIN_CONNECTION_POINT_MAP(CNo5IrcObj)
-	CONNECTION_POINT_ENTRY(__uuidof(_INo5IrcObjEvents))
-END_CONNECTION_POINT_MAP()
-// ISupportsErrorInfo
+	BEGIN_CONNECTION_POINT_MAP(CNo5IrcObj)
+		CONNECTION_POINT_ENTRY(__uuidof(_INo5IrcObjEvents))
+	END_CONNECTION_POINT_MAP()
+	// ISupportsErrorInfo
 	STDMETHOD(InterfaceSupportsErrorInfo)(REFIID riid);
 
 
@@ -97,7 +103,7 @@ public:
 	STDMETHOD(Quit)(BSTR msg);
 	STDMETHOD(SendPass)(BSTR pw);
 	STDMETHOD(SendNick)(BSTR nick);
-	STDMETHOD(SendUser)(BSTR user,BSTR name);
+	STDMETHOD(SendUser)(BSTR user, BSTR name);
 	STDMETHOD(ListChannels)();
 	STDMETHOD(ListChannelNames)(BSTR channel);
 	STDMETHOD(GetTopic)(BSTR channel);
@@ -107,9 +113,15 @@ public:
 	STDMETHOD(WhoWas)(BSTR nick);
 	STDMETHOD(Output)(BSTR msg);
 	STDMETHOD(SetTimer)(LONG id, LONG ms, LONG* pRes);
-	STDMETHOD(GetActiveViewName)(BSTR* pRes);
-	//STDMETHOD(OnChannelList)(BSTR channel, BSTR users, BSTR topic);
+	STDMETHOD(get_Marquee)(IDispatch** pRes);
+	STDMETHOD(DestroyMarquee)(IDispatch* pRes);
+	STDMETHOD(get_ActiveViewName)(BSTR* pRes);
+	STDMETHOD(get_Views)(IDispatch** ppDisp);
 };
+//OBJECT_ENTRY_NON_CREATEABLE_EX_AUTO(CLSID_No5IrcObj, CNo5IrcObj);
+//OBJECT_ENTRY_AUTO(CLSID_No5IrcObj, CNo5IrcObj);
+//(CLSID_No5IrcObj, CNo5IrcObj);
+
 
 class ATL_NO_VTABLE CUser :
 	public CComObjectRootEx<CComSingleThreadModel>,
@@ -195,4 +207,146 @@ public:
 	STDMETHOD(get_Count)(long* pVal);
 	STDMETHOD(get_Item)(long n, IDispatch** pVal);
 	STDMETHOD(get__NewEnum)(IUnknown** pVal);
+};
+
+class ATL_NO_VTABLE CChannel :
+	public CComObjectRootEx<CComSingleThreadModel>,
+	public IDispatchImpl<IView, &IID_IView /*wMajor = 1, /*wMinor = 0*/>,
+	public IProvideClassInfo2Impl<&CLSID_Channel, &IID_IView>
+{
+public:
+	CChannel()
+	{
+	}
+
+	//DECLARE_REGISTRY_RESOURCEID(IDR_NO5IRCOBJ)
+
+	DECLARE_NOT_AGGREGATABLE(CChannel)
+
+	BEGIN_COM_MAP(CChannel)
+		COM_INTERFACE_ENTRY(IView)
+		COM_INTERFACE_ENTRY(IDispatch)
+		COM_INTERFACE_ENTRY(IProvideClassInfo)
+		COM_INTERFACE_ENTRY(IProvideClassInfo2)
+	END_COM_MAP()
+
+
+	DECLARE_PROTECT_FINAL_CONSTRUCT()
+
+	HRESULT FinalConstruct()
+	{
+		return S_OK;
+	}
+
+	void FinalRelease()
+	{
+	}
+
+public:
+	CComBSTR m_name;
+	void Init(LPCOLESTR name)
+	{
+		m_name = name;
+	}
+	STDMETHOD(get_Name)(BSTR* pName)
+	{
+		HRESULT hr = m_name.CopyTo(pName);
+		return hr;
+	}
+	STDMETHOD(get_Users)(IDispatch** ppDisp);
+};
+
+typedef CComEnum<IEnumVARIANT, &IID_IEnumVARIANT, VARIANT, _Copy<VARIANT>,
+	CComSingleThreadModel> EnumVar;
+
+class ATL_NO_VTABLE CViews :
+	public CComObjectRootEx<CComSingleThreadModel>,
+	public IDispatchImpl<IViews, &IID_IViews>,
+	//public IDispatchImpl< EnumVar,&IID_IEnumVARIANT>,
+	public IProvideClassInfo2Impl<&CLSID_Views, &IID_IViews>
+{
+public:
+	CViews()
+	{
+	}
+
+	//DECLARE_REGISTRY_RESOURCEID(IDR_REGISTRY1)
+
+	DECLARE_NOT_AGGREGATABLE(CViews)
+
+	BEGIN_COM_MAP(CViews)
+		COM_INTERFACE_ENTRY(IViews)
+		COM_INTERFACE_ENTRY(IDispatch)
+		COM_INTERFACE_ENTRY(IProvideClassInfo2)
+		COM_INTERFACE_ENTRY(IProvideClassInfo)
+	END_COM_MAP()
+
+
+	DECLARE_PROTECT_FINAL_CONSTRUCT()
+
+	HRESULT FinalConstruct()
+	{
+		return S_OK;
+	}
+
+	void FinalRelease()
+	{
+	}
+
+public:
+	CSimpleArray<CComPtr<IView>> m_aViews;
+	void Init(CSimpleArray<CComPtr<IView>> aViews)
+	{
+		for (int i = 0; i < aViews.GetSize(); i++) {
+			m_aViews.Add(aViews[i]);
+		}
+	}
+	STDMETHOD(get_Count)(long* pCount);
+	STDMETHOD(get_Item)(long index, IDispatch** ppDisp);
+	STDMETHOD(get__NewEnum)(IUnknown** ppUnk);
+	
+};
+
+class ATL_NO_VTABLE CMarquee :
+	public CComObjectRootEx<CComSingleThreadModel>,
+	public IDispatchImpl<IMyMarquee,&IID_IMyMarquee>,
+	//public IDispatchImpl< EnumVar,&IID_IEnumVARIANT>,
+	public IProvideClassInfo2Impl<&CLSID_Marquee, &IID_IMyMarquee>
+{
+public:
+	CMarquee()
+	{
+	}
+
+	//DECLARE_REGISTRY_RESOURCEID(IDR_NO5IRCOBJ)
+
+	DECLARE_NOT_AGGREGATABLE(CMarquee)
+
+	BEGIN_COM_MAP(CMarquee)
+		COM_INTERFACE_ENTRY(IMyMarquee)
+		COM_INTERFACE_ENTRY2(IDispatch, IMyMarquee)
+		COM_INTERFACE_ENTRY(IProvideClassInfo2)
+		COM_INTERFACE_ENTRY(IProvideClassInfo)
+	END_COM_MAP()
+
+
+	DECLARE_PROTECT_FINAL_CONSTRUCT()
+
+	HRESULT FinalConstruct()
+	{
+		return S_OK;
+	}
+
+	void FinalRelease()
+	{
+	}
+	MarqueeOptions m_mo;
+public:
+	void Init(MarqueeOptions& mo);
+	STDMETHOD(AddItem)(BSTR bstr,OLE_COLOR clr);
+	STDMETHOD(SetFontColor)(OLE_COLOR color);
+	STDMETHOD(SetBkColor)(OLE_COLOR color);
+	STDMETHOD(Destroy)();
+	STDMETHOD(Start)();
+	STDMETHOD(Stop)();
 };

@@ -9,3 +9,5 @@
 #define WM_ONFONTSIZECHANGE		(WM_USER + 9)
 #define WM_FINDUSER				(WM_USER + 10)
 #define WM_TIMERMSG				(WM_USER + 11)
+#define WM_GETUSERS				(WM_USER + 12)	 // channel, users
+#define WM_FORMVIEW				(WM_USER + 13)

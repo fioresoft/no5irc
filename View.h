@@ -4,6 +4,7 @@
 
 #pragma once
 
+
 class CView : public CWindowImpl<CView, CNo5RichEdit>, public CRichEditCommands<CView>
 {
 public:
@@ -12,6 +13,7 @@ public:
 	BOOL PreTranslateMessage(MSG* pMsg);
 	int AppendTextIrc(LPCTSTR lpstrText);
 	void ResetFormat();
+	//virtual int AppendText(LPCTSTR text, BOOL bCanUndo = FALSE);
 
 	BEGIN_MSG_MAP(CView)
 		MESSAGE_HANDLER(WM_CREATE,OnCreate)
@@ -24,6 +26,14 @@ public:
 //	LRESULT NotifyHandler(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/)
 
 	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+};
+
+// Child window class that will be subclassed for hosting Active X control
+class CChildWindow : public CWindowImpl<CChildWindow>
+{
+public:
+	BEGIN_MSG_MAP(CChildWindow)
+	END_MSG_MAP()
 };
 
 class CBottom;

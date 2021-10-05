@@ -3,6 +3,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #pragma once
+#include "stdafx.h"
 #include "Path.h"
 #include "IIRCEvents.h"
 #include "IIrc.h"
@@ -13,9 +14,11 @@
 #include "CFileSender.h"
 #include "CFileTransferMonitor.h"
 #include "FormList.h"
-//#include "No5IrcObj.h"
 #include "CMyScriptSite.h"
+#include "No5IrcObj.h"
 #include "CScriptsView.h"
+#include "irc12.h"
+#include "MarqueeOptions.h"
 #ifdef NO5_SSL
 #include "openssl/ssl.h"
 #include "openssl/ssl3.h"
@@ -23,6 +26,7 @@
 #include "openssl/tls1.h"
 #include "openssl/err.h"
 #endif
+#include "Marquee_i.h"
 
 class CMainFrame;
 
@@ -326,18 +330,12 @@ class CMainFrame :
 	typedef CDotNetTabCtrl<CTabViewTabItem> _tabControl;
 public:
 	TTabCtrl& TabCtrl = GetMDITabCtrl();
-	struct MarqueeOptions
-	{
-		COLORREF fore;
-		COLORREF back;
-		int Elapse;
-		MarqueeOptions()
-		{
-			fore = 0xffffff;
-			back = 0x008000;
-			Elapse = 4;
-		}
-	};
+	//CMarqueeWnd m_marquee[3];
+	MarqueeOptions mo[3];
+	CComQIPtr<IMarqueeCtrl> m_spMarquee[3];
+	CChildWindow m_child[3];
+	CAxWindow m_axwnd[3];
+	
 private:
 	CWindow  TabOwnerParent = GetTabOwnerParent();
 	CTabbedMDICommandBarCtrl m_CmdBar;
@@ -348,7 +346,6 @@ private:
 	CFont m_font;
 	CNo5TreeCtrl m_tv;
 	CListViewCtrl m_lv;
-	CMarqueeWnd m_marquee;
 	CChannelsViewFrame m_ChannelsView;
 	CFormList m_FormList;
 	CString m_server;
@@ -366,7 +363,6 @@ private:
 	time_t m_t;	// PING request time
 	BOOL m_bAllowCTCP; // answer CTCP queries?
 	CString m_userinfo;
-	MarqueeOptions mo;
 	IFontOptions* m_pfo;
 	bool m_bSendLogin;
 	bool m_bssl;
@@ -379,17 +375,22 @@ private:
 	CView m_output;
 	CPath m_editor;
 	bool m_bPingPong;	// hide ping-pong messages?
+	
 	//long m_timerid;
 public:
 	CComObject<CNo5IrcObj>* m_pIrc;
 	CPath m_path;
 	CPath m_FormsPath;
+	int m_iFore;
+	int m_iBack;
+	bool m_bold;
+	bool m_italic;
+	bool m_underline;
 private:
 	
 	//
 	void CreateTreeView();
 	void CreateListView();
-	void CreateMarquee();
 	void CreateImageList();
 	BOOL PrintRTF(HWND hwnd, HDC hdc);
 	BOOL LoadUserSettings();
@@ -413,6 +414,11 @@ public:
 	CView* CreateChannel(LPCTSTR name);
 	bool ActivateViewByName(LPCTSTR name);
 	int GetActiveViews(CSimpleArray<ViewData*>& data);
+	void CreateMarquee(int i);
+	HWND GetToolbar()
+	{
+		return m_hWndToolBar;
+	}
 public:
 	DECLARE_FRAME_WND_CLASS(NULL, IDR_MAINFRAME)
 	CMainFrame() :m_sock((ISocketEvents*)this),m_tab(*this),m_ChannelsView(m_lv,this),m_bottom(*this)
@@ -437,6 +443,11 @@ public:
 		m_pIrc = NULL;
 		m_pScriptView = NULL;
 		m_bPingPong = true; // hide
+		m_iFore = 1;
+		m_iBack = 0;
+		m_bold = false;
+		m_italic = false;
+		m_underline = false;
 		//m_timerid = 1;
 		//
 		//m_CmdBar.m_hIconChildMaximized = LoadIcon(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));

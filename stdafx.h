@@ -13,7 +13,7 @@
 #define _RICHEDIT_VER	0x0500
 
 #ifdef _DEBUG
-#define PRODUCT_NAME	_T("irc11.exe")
+#define PRODUCT_NAME	_T("irc12.exe")
 #else
 #define PRODUCT_NAME	_T("no5irc.exe")
 #endif
@@ -21,6 +21,8 @@
 #define CHAIN_COMMANDS_MEMBER_ID_RANGE(theChainMember, idFirst, idLast) \
     if(uMsg == WM_COMMAND && (LOWORD(wParam) >= idFirst && LOWORD(wParam) <=idLast)/* && (theChainMember.m_hWnd == GetFocus())*/) \
         CHAIN_MSG_MAP_MEMBER(theChainMember)
+
+#define HTMLEDITIMPL 1
 
 #include <strsafe.h>
 #include <ctime>
@@ -30,7 +32,8 @@
 
 extern CAppModule _Module;
 
-#include <atlmisc.h>
+#include <atlstr.h>
+#include <atltypes.h>
 #include <atlcom.h>
 #include <atlhost.h>
 #include <atlwin.h>
@@ -68,9 +71,13 @@ extern CAppModule _Module;
 #include "..\NO5TL\ScriptSite.h"
 #include "..\NO5TL\SafeArray.h"
 #include "..\NO5TL\WinFile.h"
+#include "..\NO5TL\SimpleEncrypt.h"
+#include "..\NO5TL\htmledit.h"
+//#include "..\NO5TL\HtmlDocument.h"
 #include "viksoe/FontCombo.h"
 #include "viksoe/ColorCombo.h"
 #include "Path.h"
+
 using namespace NO5TL;
 
 

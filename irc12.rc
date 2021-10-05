@@ -88,7 +88,7 @@ BEGIN
     BUTTON      ID_EDIT_ITALIC
     BUTTON      ID_EDIT_UNDERLINE
     BUTTON      ID_BUTTON32802
-    BUTTON      ID_BUTTON32803
+    BUTTON      ID_BUTTON32794
     BUTTON      ID_BUTTON32804
     SEPARATOR
     BUTTON      ID_BUTTON32805
@@ -237,7 +237,6 @@ BEGIN
         MENUITEM "&Marquee Bar",                ID_VIEW_MARQUEE
         MENUITEM SEPARATOR
         MENUITEM "Options",                     ID_VIEW_OPTIONS
-        MENUITEM "Dark Mode",                   ID_VIEW_DARKMODE
     END
     POPUP "&Window"
     BEGIN
@@ -470,7 +469,7 @@ END
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION 1,1,0,1
- PRODUCTVERSION 1,1,0,2
+ PRODUCTVERSION 1,1,0,7
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -492,7 +491,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright 2020"
             VALUE "OriginalFilename", "irc11.exe"
             VALUE "ProductName", "NO5 IRC"
-            VALUE "ProductVersion", "1.1.0.2"
+            VALUE "ProductVersion", "1.1.0.7"
         END
     END
     BLOCK "VarFileInfo"
@@ -616,6 +615,7 @@ END
 
 STRINGTABLE
 BEGIN
+    ID_BUTTON32794          "Foreground\tForeground Color"
     ID_EDIT_BOLD            "Toggle Bold\nBold"
 END
 

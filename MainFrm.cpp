@@ -5,17 +5,25 @@
 
 #include "stdafx.h"
 #include "resource.h"
+#include "No5IrcObj.h"
+#include "CMyScriptSite.h"
+#include "MainFrm.h"
 #include "aboutdlg.h"
 #include "View.h"
 #include "ChildFrm.h"
-#include "MainFrm.h"
 #include "usermsgs.h"
 #include "COptionsDlg.h"
 #include "CFileSender.h"
-#include "No5IrcObj.h"
-#include "CMyScriptSite.h"
 #include "CScriptsView.h"
-#define IDC_BAND_MARQUEE	100
+#include "MarqueeOptions.h"
+
+class CMarqueeView : public CWindowImpl<CMarqueeView>
+{
+public:
+	BEGIN_MSG_MAP()
+	END_MSG_MAP()
+};
+
 
 
 static BOOL CALLBACK EnumChildGetDataByName(HWND hWnd, LPARAM lParam);
@@ -94,13 +102,19 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	AddSimpleReBarBand(hWndCmdBar);
 	AddSimpleReBarBand(hWndToolBar, NULL, TRUE);
 	// marquee
-	CreateMarquee();
-	AddSimpleReBarBandCtrl(m_hWndToolBar, m_marquee, IDC_BAND_MARQUEE,
-		NULL,	// title
-		TRUE,	// new row
-		0,		// cx
-		TRUE);	// full width always
-	//m_marquee.AddItem(_T("Welcome to NO5 IRC"));
+	CreateMarquee(0);
+	//AddSimpleReBarBandCtrl(m_hWndToolBar, m_marquee[0], IDC_BAND_MARQUEE,
+	//	NULL,	// title
+	//	TRUE,	// new row
+	//	0,		// cx
+	//	FALSE);	// full width always
+	//m_marquee[0].AddItem(_T("Welcome to NO5 IRC"));
+	//AddSimpleReBarBandCtrl(m_hWndToolBar, m_axwnd, IDC_BAND_MARQUEE,
+	//	NULL,	// title
+	//	TRUE,	// new row
+	//	0,		// cx
+	//	FALSE);	// full width always
+	//m_marquee[0].AddItem(_T("Welcome to NO5 IRC"));
 
 	CreateSimpleStatusBar();
 
@@ -410,7 +424,7 @@ BOOL EnumFindName(CNo5TreeItem& item, LPARAM lParam)
 	EnumNameData* p = (EnumNameData*)lParam;
 
 	item.GetText(name);
-	LPCTSTR found = ::StrStrI(name, p->partial);
+	LPCTSTR found = StrStrI((LPCTSTR)name, (LPCTSTR)(p->partial));
 
 	if (found != NULL && found == (LPCTSTR)name) {
 		p->pres->Add(name);
@@ -574,12 +588,12 @@ LRESULT CMainFrame::OnViewDarkMode(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hW
 	COLORREF aNormalColors[] = {GetSysColor(COLOR_WINDOW),GetSysColor(COLOR_WINDOWTEXT)};*/
 
 	if (m_bDarkMode) {
-		m_marquee.SetBackColor(0);
-		m_marquee.SetTextColor(0xffffff);
+		/*m_marquee[0].SetBackColor(0);
+		m_marquee[0].SetTextColor(0xffffff);*/
 		if (pView) {
 			pView->SetTextBkColor(0,SCF_ALL);
 			pView->SetTextColor(0xffffff,SCF_ALL);
-			SetClassLongPtr(pView->m_hWnd, GCLP_HBRBACKGROUND, (LONG_PTR)AtlGetStockBrush(BLACK_BRUSH));
+			//SetClassLongPtr(pView->m_hWnd, GCLP_HBRBACKGROUND, (LONG_PTR)AtlGetStockBrush(BLACK_BRUSH));
 		}
 		//SetSysColors(count, aElements, aColors);
 		m_tv.SetBkColor(0);
@@ -592,8 +606,8 @@ LRESULT CMainFrame::OnViewDarkMode(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hW
 		m_bottom.m_client.SetTextColor(0xffffff, SCF_ALL);
 	}
 	else {
-		m_marquee.SetBackColor(mo.back);
-		m_marquee.SetTextColor(mo.fore);
+		//m_marquee[0].SetBackColor(mo[0].back);
+		//m_marquee[0].SetTextColor(mo[0].fore);
 		if (pView) {
 			pView->SetTextBkColor(0xffffff, SCF_ALL);
 			pView->SetTextColor(0,SCF_ALL);
@@ -616,9 +630,9 @@ LRESULT CMainFrame::OnViewDarkMode(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hW
 
 LRESULT CMainFrame::OnMarqueeChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	mo.fore = m_marquee.GetTextColor();
-	mo.back = m_marquee.GetBackColor();
-	mo.Elapse = m_marquee.GetElapse();
+	/*mo[0].fore = m_marquee[0].GetTextColor();
+	mo[0].back = m_marquee[0].GetBackColor();
+	mo[0].Elapse = m_marquee[0].GetElapse();*/
 	return 0;
 }
 
@@ -1032,8 +1046,10 @@ LRESULT CMainFrame::OnMsgFromBottom(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lPara
 				msg.Append(_T("\r\n"));
 				if (!m_bssl)
 					m_sock.Send(CT2CA(msg), msg.GetLength());
+#ifdef NO5_SSL
 				else
 					m_sock.SendStringSSL(CT2CA(msg));
+#endif
 				CString s;
 				for (int i = 2; i < arr.GetSize(); i++) {
 					s += arr[i];
@@ -1326,9 +1342,13 @@ BOOL CMainFrame::LoadUserSettings()
 		m_bAllowCTCP = ini.GetInt(_T("CTCP"), _T("AnswerCTCPQueries"),m_bAllowCTCP ? 1  : 0);
 		m_userinfo = ini.GetString(_T("CTCP"), _T("USERINFO"), m_userinfo, MAX_PATH);
 		m_bDarkMode = ini.GetInt(_T("appearance"), _T("darkmode"), m_bDarkMode ? 1 : 0);
-		mo.fore = ini.GetInt(_T("marquee"), _T("fore"), 0xffffff);
-		mo.back = ini.GetInt(_T("marquee"), _T("back"), 0x008000);
-		mo.Elapse = ini.GetInt(_T("marquee"), _T("Elapse"), 4);
+		mo[0].fore = ini.GetInt(_T("marquee"), _T("fore"), 0xffffff);
+		mo[0].back = ini.GetInt(_T("marquee"), _T("back"), 0x008000);
+		mo[0].Elapse = ini.GetInt(_T("marquee"), _T("Elapse"), 4);
+		mo[1].fore = ini.GetInt(_T("marquee1"), _T("fore"), 0xffffff);
+		mo[1].back = ini.GetInt(_T("marquee1"), _T("back"), 0x008000);
+		mo[1].Elapse = ini.GetInt(_T("marquee1"), _T("Elapse"), 4);
+		mo[1].bLoop = ini.GetInt(_T("marquee1"), _T("Loop"), VARIANT_TRUE);
 		m_bPingPong = ini.GetInt(_T("settings"), _T("hidepingpong"), m_bPingPong ? 1 : 0);
 		NO5TL::SimpleEncryptedData data;
 		
@@ -1398,9 +1418,17 @@ BOOL CMainFrame::SaveUserSettings()
 			res = ini.WriteInt(_T("appearance"), _T("darkmode"), m_bDarkMode ? 1 : 0);
 		}
 		if (res) {
-			if (ini.WriteInt(_T("marquee"), _T("fore"), mo.fore)) {
-				if (ini.WriteInt(_T("marquee"), _T("back"), mo.back)) {
-					res = ini.WriteInt(_T("marquee"), _T("elapse"), mo.Elapse);
+			if (ini.WriteInt(_T("marquee"), _T("fore"), mo[0].fore)) {
+				if (ini.WriteInt(_T("marquee"), _T("back"), mo[0].back)) {
+					res = ini.WriteInt(_T("marquee"), _T("elapse"), mo[0].Elapse);
+				}
+			}
+			if (res) {
+				if (ini.WriteInt(_T("marquee1"), _T("fore"), mo[1].fore)) {
+					if (ini.WriteInt(_T("marquee1"), _T("back"), mo[1].back)) {
+						res = ini.WriteInt(_T("marquee1"), _T("elapse"), mo[1].Elapse);
+						res = ini.WriteInt(_T("marquee1"), _T("Loop"), mo[1].bLoop);
+					}
 				}
 			}
 		}
@@ -1564,7 +1592,7 @@ bool CMainFrame::ParseUserName(const CString& user, CString& nick, CString& name
 	return /*nBang >= 0 && */ !nick.IsEmpty();
 }
 
-void CMainFrame::CreateMarquee(void)
+void CMainFrame::CreateMarquee(int i)
 {
 	CRect r;
 	{
@@ -1584,21 +1612,44 @@ void CMainFrame::CreateMarquee(void)
 		r.bottom = 3 * tm.tmHeight / 2;
 	}
 
-	m_marquee.Create(m_hWnd, r, NULL, 0, 0, IDC_MARQUEE1);
-	m_marquee.SetInc(m_marquee.GetCharWidth() / 8);
-	m_marquee.SetSpace(2 * m_marquee.GetCharWidth());
-	m_marquee.SetLoop(false);
+	/*m_marquee[i].Create(m_hWnd, r, NULL, 0, 0, IDC_MARQUEE1 + i);
+	m_marquee[i].SetInc(m_marquee[0].GetCharWidth() / 8);
+	m_marquee[i].SetSpace(2 * m_marquee[0].GetCharWidth());
+	m_marquee[i].SetLoop(false);
 	if (m_bDarkMode) {
-		m_marquee.SetTextColor(0xffffff);
-		m_marquee.SetBackColor(0);
+		m_marquee[i].SetTextColor(0xffffff);
+		m_marquee[i].SetBackColor(0);
 	}
 	else {
-		m_marquee.SetTextColor(mo.fore);
-		m_marquee.SetBackColor(mo.back);
+		m_marquee[i].SetTextColor(mo[i].fore);
+		m_marquee[i].SetBackColor(mo[i].back);
 	}
-	m_marquee.SetElapse(mo.Elapse);
-	m_marquee.Start();
-	m_marquee.AddItem(_T("Welcome to NO5 IRC"));
+	m_marquee[i].SetElapse(mo[i].Elapse);
+	m_marquee[i].Start();*/
+	m_child[i].Create(m_hWnd, r, NULL, WS_CHILD | WS_VISIBLE);
+	m_axwnd[i].Attach(m_child[i]);
+	ATLASSERT(m_child[i].IsWindow());
+	CComPtr<IUnknown> sp;
+	AtlAxCreateControl(OLESTR("my.marquee"), m_axwnd[i], NULL, NULL);
+	HRESULT hr = m_axwnd[i].QueryControl(&sp);
+	ATLASSERT(SUCCEEDED(hr));
+	if (SUCCEEDED(hr)) {
+		m_spMarquee[i] = sp;
+		OLE_COLOR clr = 0xffffff;
+		m_spMarquee[i]->put_Elapse(mo[i].Elapse);
+		m_spMarquee[i]->put_BackColor(mo[i].back);
+		m_spMarquee[i]->put_Loop(mo[i].bLoop);
+		m_spMarquee[i]->Start();
+		if(i == 0)
+			m_spMarquee[i]->AddItem(CComBSTR(_T("Welcome to NO5 IRC")), clr);
+
+		AddSimpleReBarBandCtrl(GetToolbar(), m_axwnd[i], IDC_BAND_MARQUEE + i,
+			NULL,	// title
+			TRUE,	// new row
+			0,		// cx
+			FALSE);	// full width always
+	}
+	
 }
 
 void CMainFrame::OnSockError(int error)
@@ -1667,9 +1718,11 @@ void CMainFrame::OnSockRead(int error)
 	//buffer.AddNull();
 	ATLTRACE(_T("read %d\n"), res);
 	if (res == (sizeof(buf))) {
-		ATLTRACE(_T("returning %d\n"), buffer.GetDataLen());
-		//::Sleep(100);
-		return;
+		if (buf[buflen - 1] != '\n') {
+			ATLTRACE(_T("returning %d\n"), buffer.GetDataLen());
+			//::Sleep(100);
+			return;
+		}
 	}
 	else {
 		CStringA tmp = buf;
@@ -1822,7 +1875,7 @@ void CMainFrame::OnSockRead(int error)
 			}
 			else if (!code.CompareNoCase(_T("QUIT"))) {
 				str = lines[i];
-				m_marquee.AddItem(str);
+				m_spMarquee[0]->AddItem(CComBSTR(str),0xffffff);
 				CString nick, user, ip;
 				bool b = ParseUserName(str, nick, user, ip);
 				//ATLASSERT(b);
@@ -2378,6 +2431,7 @@ void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg,bool scr
 	CString t = GetTimeString();
 	CString str = user; str += _T(": ");
 	CColor fore, back;
+	bool me = false;
 
 	if (!channel || !user || !msg) {
 		ATLTRACE(_T("NULL pointer in OnChannelMsg\n"));
@@ -2411,6 +2465,7 @@ void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg,bool scr
 			m_pfo->GetUserName(fore, back);
 		}
 		else {// me
+			me = true;
 			fore = m_pfo->MeFore(false, false);
 			back = m_pfo->MeBack(false, false);
 		}
@@ -2418,7 +2473,7 @@ void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg,bool scr
 		p->SetTextColor(fore);
 		p->SetTextBkColor(back);
 	}
-	str.Remove(':');
+	//str.Remove(':');
 	p->AppendText(str);
 	str = msg;
 	if (!m_bDarkMode) {
@@ -2435,9 +2490,23 @@ void CMainFrame::OnChannelMsg(LPCTSTR channel,LPCTSTR user, LPCTSTR msg,bool scr
 	}
 	if (m_bNoColors)
 		p->AppendText(str);
-	else {
-		p->AppendTextIrc(str);
+	else if(me){
+		CString code;
+
+		code.AppendFormat(_T("\003%02d,%02d"), m_iFore, m_iBack);
+		if (m_bold)
+			code.Append(_T("\002"));
+		if (m_italic)
+			code.Append(_T("\x1d"));
+		if (m_underline)
+			code.Append(_T("\x1f"));
+		code += msg;
+		p->AppendTextIrc(code);
+		//p->AppendTextIrc(msg);
 		p->ResetFormat();
+	}
+	else {
+		p->AppendTextIrc(msg);
 	}
 	//p->AppendText(_T("\n"));
 	p->SetSelEnd();
@@ -2571,7 +2640,8 @@ void CMainFrame::OnUserJoin(LPCTSTR channel, LPCTSTR user)
 		p->SetTextColor(fore);
 		p->AppendText(msg);
 	}
-	m_marquee.AddItem(msg);
+	//m_marquee[0].AddItem(msg);
+	m_spMarquee[0]->AddItem(CComBSTR(msg), 0xffffff);
 	if (true /*user != m_nick*/) {
 		CString ch = channel;
 
@@ -2643,7 +2713,8 @@ void CMainFrame::OnUserPart(LPCTSTR channel, LPCTSTR user, LPCTSTR msg)
 	p->SetTextColor(fore);
 	txt += _T(" leaves the channel: "); txt += channel; txt += ' '; txt += msg; txt += '\n';
 	p->AppendText(txt);
-	m_marquee.AddItem(txt);
+	//m_marquee[0].AddItem(txt);
+	m_spMarquee[0]->AddItem(CComBSTR(txt), 0xffffff);
 	// update tree view
 	CNo5TreeItem parent = m_tv.FindItem(channel, TRUE, TRUE);
 	//ATLASSERT(!parent.IsNull());
@@ -2762,6 +2833,18 @@ void CMainFrame::SendChannelMsg(LPCTSTR channel, LPCTSTR msg)
 
 	code += channel;
 	code += " :";
+	if (!m_bNoColors) {
+		if (m_iFore != 1 || m_iBack != 0 || m_bold || m_italic || m_underline) {
+			code.AppendFormat("\003%02d,%02d", m_iFore, m_iBack);
+			if (m_bold)
+				code.AppendFormat("\002");
+			if (m_italic)
+				code.Append("x1D");
+			if (m_underline)
+				code.Append("\x1F");
+		}
+	}
+	
 	code += msg;
 	code += "\r\n";
 	if (!m_bssl)

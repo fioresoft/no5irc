@@ -1,0 +1,20 @@
+// irc12.idl : IDL source for irc12.exe
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (irc12.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	uuid(E5625B0B-E19D-4C48-AEE6-AB0233205B2A),
+	version(1.0),
+	helpstring("irc12 1.0 Type Library")
+]
+library irc12Lib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+};

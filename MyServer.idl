@@ -35,8 +35,28 @@ interface INo5IrcObj : IDispatch
 	[id(17)] HRESULT WhoWas([in] BSTR nick);
 	[id(18)] HRESULT Output([in] BSTR msg);
 	[id(19)] HRESULT SetTimer([in] LONG id, [in] LONG ms, [out, retval] LONG* res);
-	[propget,id(20)] HRESULT ActiveViewName([out, retval] BSTR* res);
-	[propget,id(21)] HRESULT Views([out, retval] IDispatch** ppDisp);
+	[propget,id(20)] HRESULT Marquee([out, retval] IDispatch** ppDisp);
+	[id(21)] HRESULT DestroyMarquee([in] IDispatch* pDisp);
+	[propget,id(22)] HRESULT ActiveViewName([out, retval] BSTR* res);
+	[propget,id(23)] HRESULT Views([out, retval] IDispatch** ppDisp);
+	
+};
+
+[
+	object,
+	uuid(085E66BF-39E6-4DD4-9232-89E987880ED2),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IMyMarquee : IDispatch
+{
+	[id(1)] HRESULT AddItem([in] BSTR bstr,[in] OLE_COLOR clr);
+	[id(2)] HRESULT SetFontColor([in] OLE_COLOR clr);
+	[id(3)] HRESULT SetBkColor([in] OLE_COLOR clr);
+	[id(4)] HRESULT Destroy();
+	[id(5)] HRESULT Start();
+	[id(6)] HRESULT Stop();
 };
 
 [
@@ -161,6 +181,14 @@ library MyServerLib
 	{
 		[default] interface IView;
 	};
+	[
+		uuid(80E29671-8873-4BB4-81A6-2F758B194FB1)
+	]
+	coclass Marquee //
+	{
+		[default] interface IMyMarquee;
+	};
+
 
 };
 import "shobjidl.idl";

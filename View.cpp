@@ -240,9 +240,9 @@ void CBottom::CreateToolBar()
 	AddSimpleReBarBand(hWndToolBar, NULL, TRUE);
 	UIAddToolBar(hWndToolBar);
 	m_tb.SetButtonInfo(0, TBIF_BYINDEX | TBIF_STATE, 0, TBSTATE_HIDDEN, NULL, 0, 0, 0, 0);
-	m_tb.SetButtonInfo(ID_EDIT_BOLD, TBIF_STATE, 0, TBSTATE_ENABLED, NULL, 0, 0, 0, 0);
-	m_tb.SetButtonInfo(ID_EDIT_ITALIC, TBIF_STATE , 0, TBSTATE_ENABLED, NULL, 0, 0, 0, 0);
-	m_tb.SetButtonInfo(ID_EDIT_UNDERLINE, TBIF_STATE, 0, TBSTATE_ENABLED, NULL, 0, 0, 0, 0);
+	m_tb.SetButtonInfo(ID_EDIT_BOLD, TBIF_STATE|TBIF_STYLE, BTNS_CHECK, TBSTATE_ENABLED, 0, 0, 0, 0, 0);
+	m_tb.SetButtonInfo(ID_EDIT_ITALIC, TBIF_STATE| TBIF_STYLE, BTNS_CHECK, TBSTATE_ENABLED, NULL, BTNS_CHECK, 0, 0, 0);
+	m_tb.SetButtonInfo(ID_EDIT_UNDERLINE, TBIF_STATE| TBIF_STYLE, BTNS_CHECK, TBSTATE_ENABLED, NULL, BTNS_CHECK, 0, 0, 0);
 	
 }
 
@@ -414,7 +414,10 @@ LRESULT CBottom::OnBold(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BO
 	static bool checked = false;
 
 	checked = !checked;
-	m_client.AppendText(_T("\002"), TRUE);
+	
+	//m_client.AppendText(_T("\002"), TRUE);*/
+	
+	this->m_frame.m_bold = this->m_tb.IsButtonChecked(ID_EDIT_BOLD);
 	return 0;
 }
 LRESULT CBottom::OnItalic(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
@@ -422,7 +425,8 @@ LRESULT CBottom::OnItalic(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, 
 	static bool checked = false;
 
 	checked = !checked;
-	m_client.AppendText(_T("\x1d"), TRUE);
+	//m_client.AppendText(_T("\x1d"), TRUE);
+	m_frame.m_italic = this->m_tb.IsButtonChecked(ID_EDIT_ITALIC);
 	return 0;
 }
 LRESULT CBottom::OnUnderline(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
@@ -430,27 +434,30 @@ LRESULT CBottom::OnUnderline(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*
 	static bool checked = false;
 
 	checked = !checked;
-	m_client.AppendText(_T("\x1f"), TRUE);
+	//m_client.AppendText(_T("\x1f"), TRUE);
+	m_frame.m_underline = this->m_tb.IsButtonChecked(ID_EDIT_UNDERLINE);
 	return 0;
 }
 LRESULT CBottom::OnForeSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	int fore = m_cbFore.GetCurSel();
-	int back = m_cbBack.GetCurSel();
-	CString code;
+	//int back = m_cbBack.GetCurSel();
+	/*CString code;
 
 	code.Format(_T("\003%02d,%02d"), fore, back);
-	m_client.AppendText(code, TRUE);
+	m_client.AppendText(code, TRUE);*/
+	m_frame.m_iFore = fore;
 	return 0;
 }
 LRESULT CBottom::OnBackSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	int fore = m_cbFore.GetCurSel();
+	//int fore = m_cbFore.GetCurSel();
 	int back = m_cbBack.GetCurSel();
-	CString code;
+	//CString code;
 
 	/*code.Format(_T("\003%02d,%02d"), fore, back);
 	m_client.AppendText(code, TRUE);*/
+	m_frame.m_iBack = back;
 	return 0;
 }
 
@@ -514,7 +521,8 @@ LRESULT CBottomClient::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/
 		if (cr.cpMin == cr.cpMax) {
 			TEXTRANGE tr;
 
-			cr.cpMin = FindWordBreak(WB_MOVEWORDLEFT, cr.cpMin);
+			cr.cpMin = FindWordBreak(WB_LEFTBREAK, cr.cpMax);
+			cr.cpMin == 0 ? 0 : cr.cpMin++;
 			tr.chrg = cr;
 			if (cr.cpMax > cr.cpMin) {
 				CString sPartial;
