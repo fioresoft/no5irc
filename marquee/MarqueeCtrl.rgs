@@ -1,0 +1,34 @@
+HKCR
+{
+	my.marquee.1 = s 'MarqueeCtrl class'
+	{
+		CLSID = s '{9b827241-d8a6-4027-8a52-2ace99bd4907}'
+		Insertable
+	}
+	my.marquee = s 'MarqueeCtrl class'
+	{		
+		CurVer = s 'my.marquee.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {9b827241-d8a6-4027-8a52-2ace99bd4907} = s 'MarqueeCtrl class'
+		{
+			ProgID = s 'my.marquee.1'
+			VersionIndependentProgID = s 'my.marquee'
+			ForceRemove Programmable
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			ForceRemove Control
+			ForceRemove Insertable
+			ForceRemove 'ToolboxBitmap32' = s '%MODULE%, 106'
+			MiscStatus = s '0'
+			{
+			    '1' = s '%OLEMISC%'
+			}
+			TypeLib = s '{52deb09c-a331-4392-b9ab-e1918bec2adf}'
+			Version = s '1.0'
+		}
+	}
+}

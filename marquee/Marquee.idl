@@ -1,0 +1,50 @@
+// Marquee.idl : fonte IDL para Marquee
+//
+
+// Este arquivo será processado pela ferramenta MIDL para
+// produzir a biblioteca de tipos (Marquee.tlb) e o código de marshaling.
+
+#include "olectl.h"
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	object,
+	uuid(eb78731d-c042-4732-bbc3-ef82aa0d9ae8),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IMarqueeCtrl : IDispatch
+{
+	[propput, bindable, requestedit, id(DISPID_BACKCOLOR)]
+	HRESULT BackColor([in]OLE_COLOR clr);
+	[propget, bindable, requestedit, id(DISPID_BACKCOLOR)]
+	HRESULT BackColor([out,retval]OLE_COLOR* pclr);
+	[id(1)] HRESULT AddItem([in]BSTR bstr, [in]OLE_COLOR clr);
+	[id(2)] HRESULT Start();
+	[id(3)] HRESULT Stop();
+	[propput, id(4)] HRESULT Loop([in] VARIANT_BOOL bLoop);
+	[propget, id(4)] HRESULT Loop([out, retval] VARIANT_BOOL* bLoop);
+	[propput, id(5)] HRESULT Elapse([in] long ms);
+	[propget, id(5)] HRESULT Elapse([out,retval] long *pms);
+
+};
+
+[
+	uuid(52deb09c-a331-4392-b9ab-e1918bec2adf),
+	version(1.0),
+]
+library MarqueeLib
+{
+	importlib("stdole2.tlb");
+	[
+		uuid(9b827241-d8a6-4027-8a52-2ace99bd4907),
+		control
+	]
+	coclass MarqueeCtrl
+	{
+		[default] interface IMarqueeCtrl;
+	};
+};
+
