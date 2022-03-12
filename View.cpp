@@ -233,11 +233,10 @@ void CBottom::CreateClient()
 
 void CBottom::CreateToolBar()
 {
-	HWND hWndToolBar = CreateSimpleToolBarCtrl(m_hWnd, IDR_BOTTOM_FRAME, FALSE, ATL_SIMPLE_TOOLBAR_PANE_STYLE);
+	HWND hWndToolBar = CreateSimpleToolBarCtrl(m_rebar, IDR_BOTTOM_FRAME, FALSE, ATL_SIMPLE_TOOLBAR_PANE_STYLE);
 
 	m_tb.Attach(hWndToolBar);
-	CreateSimpleReBar(ATL_SIMPLE_REBAR_NOBORDER_STYLE);
-	AddSimpleReBarBand(hWndToolBar, NULL, TRUE);
+	AddSimpleReBarBand(hWndToolBar, NULL, FALSE);
 	UIAddToolBar(hWndToolBar);
 	m_tb.SetButtonInfo(0, TBIF_BYINDEX | TBIF_STATE, 0, TBSTATE_HIDDEN, NULL, 0, 0, 0, 0);
 	m_tb.SetButtonInfo(ID_EDIT_BOLD, TBIF_STATE|TBIF_STYLE, BTNS_CHECK, TBSTATE_ENABLED, 0, 0, 0, 0, 0);
@@ -249,15 +248,25 @@ void CBottom::CreateToolBar()
 LRESULT CBottom::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	_baseClass::OnCreate(uMsg, wParam, lParam, bHandled);
-	CreateToolBar();
+	CreateSimpleReBar(ATL_SIMPLE_REBAR_NOBORDER_STYLE| RBS_TOOLTIPS);
+	m_rebar.Attach(m_hWndToolBar);
+	//UIAddChildWindowContainer(m_rebar);
 	CreateComboFonts();
 	CreateComboSize();
 	CreateColorCombos();
+	CreateToolBar();
+	CreateToolTip();
 	CreateClient();
 	m_hAccel = ::LoadAccelerators(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
 	m_hWndClient = m_client;
 	//
 	//
+	return 0;
+}
+
+LRESULT CBottom::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	bHandled = TRUE;
 	return 0;
 }
 
@@ -312,10 +321,11 @@ void CBottom::CreateComboFonts()
 	rc.left = rc.top = 0;
 	rc.right = 0;
 	rc.bottom = 250;
-	m_cbFonts.Create(m_tb, rc, (LPCTSTR)0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | \
+	m_cbFonts.Create(m_rebar, rc, (LPCTSTR)0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | \
 		CBS_DROPDOWNLIST | CBS_SORT | CBS_OWNERDRAWVARIABLE | CBS_HASSTRINGS, 0, IDC_COMBO_FONTS);
 	m_cbFonts.SetExtendedFontStyle(FPS_EX_TYPEICON | FPS_EX_SHOWFACE);
-	ToolbarAddControl(m_tb, m_cbFonts, 1, 6, TRUE);
+	//ToolbarAddControl(m_tb, m_cbFonts, 1, 6, TRUE);
+	AddSimpleReBarBand(m_cbFonts,_T("Fonts"),FALSE,150,TRUE);
 	m_cbFonts.Dir();
 	int index = m_cbFonts.FindString(0, _T("Arial"));
 	if (index >= 0)
@@ -328,7 +338,7 @@ void CBottom::CreateComboSize()
 	CRect rc;
 
 	rc.bottom = 250;
-	m_cbSize.Create(m_tb, rc, (LPCTSTR)0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | CBS_DROPDOWNLIST, 0,
+	m_cbSize.Create(m_rebar, rc, (LPCTSTR)0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | CBS_DROPDOWNLIST, 0,
 		IDC_COMBO_SIZE);
 	CString text;
 
@@ -337,7 +347,8 @@ void CBottom::CreateComboSize()
 		m_cbSize.AddString(text);
 	}
 	m_cbSize.SelectString(0, _T("12"));
-	ToolbarAddControl(m_tb, m_cbSize, 8, 3, TRUE);
+	//ToolbarAddControl(m_tb, m_cbSize, 8, 3, TRUE);
+	AddSimpleReBarBand(m_cbSize,_T("Size:"),FALSE,50,TRUE);
 	m_cbSize.SetFont(AtlGetDefaultGuiFont());
 }
 
@@ -346,30 +357,21 @@ void CBottom::CreateColorCombos()
 	CRect rc;
 
 	rc.bottom = 250;
-	m_cbFore.Create(m_tb, rc, 0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED, 0, IDC_COMBO_FORE);
-	ToolbarAddControl(m_tb, m_cbFore, 15, 3, TRUE);
+	m_cbFore.Create(m_rebar, rc, 0, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED, 0, IDC_COMBO_FORE);
+	//ToolbarAddControl(m_tb, m_cbFore, 15, 3, TRUE);
+	AddSimpleReBarBand(m_cbFore, _T("Foreground:"), FALSE, 70, TRUE);
 	for (int i = 0; i <= 15; i++) {
 		m_cbFore.AddColor(i, ColorFromCode(i));
 	}
-	m_cbBack.Create(m_tb, rc, 0, WS_CHILD|WS_VISIBLE | WS_VSCROLL | WS_BORDER | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED, 0, IDC_COMBO_BACK);
-	ToolbarAddControl(m_tb, m_cbBack, 19, 3, TRUE);
+	m_cbBack.Create(m_rebar, rc, 0, WS_CHILD|WS_VISIBLE | WS_VSCROLL | WS_BORDER | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED, 0, IDC_COMBO_BACK);
+	//ToolbarAddControl(m_tb, m_cbBack, 19, 3, TRUE);
+	AddSimpleReBarBand(m_cbBack, _T("Background:"), FALSE, 70, TRUE);
 	for (int i = 0; i <= 15; i++) {
 		m_cbBack.AddColor(i, ColorFromCode(i));
 	}
 	m_cbFore.SelectColor(0);
 	m_cbBack.SelectColor(0xffffff);
 
-	m_tt.Create(m_hWnd, 0, 0, WS_CHILD|WS_VISIBLE|TTS_ALWAYSTIP | TTS_NOPREFIX, 0,IDC_TT_FORE);
-	ATLASSERT(m_tt.IsWindow());
-	::SetWindowPos(m_tt, HWND_TOPMOST, 0, 0, 0, 0,SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-	TTTOOLINFO ti = { sizeof(ti) };
-	ti.uFlags = TTF_IDISHWND;
-	ti.uId = (UINT_PTR)(HWND(m_cbFore));
-	ti.hwnd = m_hWnd;// m_tb;
-	ti.lpszText = LPSTR_TEXTCALLBACK;
-	BOOL res = m_tt.AddTool(&ti);
-	ATLASSERT(res);
-	m_tt.Activate(TRUE);
 }
 
 void CBottom::DisableFormat()
@@ -468,13 +470,15 @@ LRESULT CBottom::OnSelChange(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled)
 	int nBandIndex = 0;// rebar.IdToIndex(IDR_BOTTOM_FRAME);	// toolbar is 2nd added band
 
 	if (pData->iItem2 == 1 || pData->iItem2 == 2) {
-		rebar.ShowBand(nBandIndex, FALSE);
-		UISetCheck(ID_VIEW_TOOLBAR, FALSE);
+		//rebar.ShowBand(nBandIndex, FALSE);
+		m_rebar.ShowWindow(SW_HIDE);
+		//UISetCheck(ID_VIEW_TOOLBAR, FALSE);
 		UpdateLayout();
 	}
 	else if (pData->iItem2 == 0) {
-		rebar.ShowBand(nBandIndex, TRUE);
-		UISetCheck(ID_VIEW_TOOLBAR, TRUE);
+		//rebar.ShowBand(nBandIndex, TRUE);
+		m_rebar.ShowWindow(SW_SHOW);
+		//UISetCheck(ID_VIEW_TOOLBAR, TRUE);
 		UpdateLayout();
 	}
 	bHandled = FALSE;
@@ -500,6 +504,36 @@ int CBottom::GetDesiredHeight()
 	// borders
 	h += 150; // oh fuck, whatever TODO
 	return h;
+}
+
+HWND CBottom::CreateToolTip()
+{
+	// Create the tooltip. g_hInst is the global instance handle.
+	HWND hwndTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
+		WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON,
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		m_hWnd, NULL,
+		_Module.GetModuleInstance(), NULL);
+
+	//m_tt.Create(m_hWnd, 0, 0, WS_CHILD|WS_VISIBLE|TTS_ALWAYSTIP | TTS_NOPREFIX, 0,IDC_TT_FORE);
+
+	m_tt = hwndTip;
+	ATLASSERT(m_tt.IsWindow());
+	//::SetWindowPos(m_tt, HWND_TOPMOST, 0, 0, 0, 0,SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+	TTTOOLINFO ti = { sizeof(ti) };
+	ti.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+	ti.uId = (UINT_PTR)(HWND(m_cbFore));
+	ti.hwnd = m_hWnd;// m_tb;
+	ti.lpszText = _T("Foreground Color");
+	BOOL res = m_tt.AddTool(&ti);
+	ATLASSERT(res);
+	ti.uId = (UINT_PTR)(HWND(m_cbBack));
+	ti.lpszText = _T("Background Color");
+	res = m_tt.AddTool(&ti);
+	ATLASSERT(res);
+
+	return hwndTip;
 }
 
 // CBottomClient

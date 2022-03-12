@@ -152,12 +152,19 @@ public:
 	CToolBarCtrl m_tb;
 	CToolTipCtrl m_tt;
 	HACCEL m_hAccel;
+	CReBarCtrl m_rebar;
 public:
 	DECLARE_FRAME_WND_CLASS(_T("NO5BottomFrame"),IDR_BOTTOM_FRAME)
 
 	CBottom(CMainFrame &frame):m_client(this,frame),m_frame(frame),m_cbFore(m_tt)
 	{
 		m_hAccel = NULL;
+	}
+	virtual ~CBottom()
+	{
+		m_tt.DestroyWindow();
+		m_rebar.DestroyWindow();
+		m_tb.DestroyWindow();
 	}
 
 	BEGIN_UPDATE_UI_MAP(CBottom)
@@ -169,6 +176,7 @@ public:
 
 	BEGIN_MSG_MAP(CBottom)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
+		MESSAGE_HANDLER(WM_DESTROY,OnDestroy)
 		COMMAND_HANDLER(IDC_COMBO_FONTS, CBN_SELENDOK, OnFontsSelChange)
 		COMMAND_HANDLER(IDC_COMBO_SIZE, CBN_SELENDOK, OnSizeSelChange)
 		COMMAND_ID_HANDLER(ID_EDIT_BOLD, OnBold)
@@ -178,7 +186,6 @@ public:
 		COMMAND_HANDLER(IDC_COMBO_BACK, CBN_SELENDOK, OnBackSelChange)
 		NOTIFY_CODE_HANDLER(CTCN_SELCHANGE, OnSelChange)
 		NOTIFY_CODE_HANDLER(TTN_SHOW,OnShowTT)
-		NOTIFY_HANDLER(IDC_TT_FORE,TTN_GETDISPINFO,OnGetDispInfo)
 		NOTIFY_HANDLER(IDC_LV_TRANSFERS,NM_RCLICK,OnLVTransfersRightClick)
 		CHAIN_COMMANDS_MEMBER_ID_RANGE(m_client, ID_EDIT_CLEAR, ID_EDIT_FIND_PREVIOUS)
 		//CHAIN_CLIENT_COMMANDS()
@@ -197,6 +204,7 @@ public:
 	void CreateColorCombos();
 	void DisableFormat();
 	void EnableFormat();
+	HWND CreateToolTip();
 
 	// Handler prototypes (uncomment arguments if needed):
 	//	LRESULT MessageHandler(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
@@ -204,6 +212,7 @@ public:
 	//	LRESULT NotifyHandler(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/)
 
 	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled);
+	LRESULT OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnFontsSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnSizeSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnBold(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
@@ -213,15 +222,6 @@ public:
 	LRESULT OnBackSelChange(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnShowTT(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/)
 	{
-		//m_tt.Popup();
-		return 0;
-	}
-	LRESULT OnGetDispInfo(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/)
-	{
-		//m_tt.Activate(TRUE);
-		LPNMTTDISPINFO pInfo = (LPNMTTDISPINFO)pnmh;
-		pInfo->uFlags = TTF_DI_SETITEM| TTF_IDISHWND;
-		wcscpy(pInfo->szText, _T("Foreground Color"));
 		//m_tt.Popup();
 		return 0;
 	}
