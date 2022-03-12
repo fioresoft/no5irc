@@ -1,7 +1,7 @@
 # no5irc
-NO5 IRC v1.1.0.7
+NO5 IRC v1.1.0.10
 An IRC client for Windows  
-folder include contains work of Daniel Bowen and can be find here https://www.codeproject.com/Articles/2431/Custom-Tab-Controls-Tabbed-Frame-and-Tabbed-MDI  
+folder include contains work of Daniel Bowen and can be found here https://www.codeproject.com/Articles/2431/Custom-Tab-Controls-Tabbed-Frame-and-Tabbed-MDI  
 folder viksoe contains code that can be found here https://www.viksoe.dk/code/all_wtl.htm  
 folder NO5TL is my own template library  
 folder marquee contains my marquee COM control  
