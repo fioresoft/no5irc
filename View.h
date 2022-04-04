@@ -3,20 +3,28 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #pragma once
+#include "TextStream.h"
+
+class CBottom;
+class CMainFrame;
 
 
-class CView : public CWindowImpl<CView, CNo5RichEdit>, public CRichEditCommands<CView>
+class CView : public CWindowImpl<CView, CNo5RichEdit>, public CRichEditCommands<CView>,
+	CMessageFilter
 {
+	HACCEL m_hAccel;
 public:
 	DECLARE_WND_SUPERCLASS(NULL, CRichEditCtrl::GetWndClassName())
 
-	BOOL PreTranslateMessage(MSG* pMsg);
-	int AppendTextIrc(LPCTSTR lpstrText);
-	void ResetFormat();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	
 	//virtual int AppendText(LPCTSTR text, BOOL bCanUndo = FALSE);
+	CTextStream m_ts;
+	CMainFrame& m_frame;
 
 	BEGIN_MSG_MAP(CView)
 		MESSAGE_HANDLER(WM_CREATE,OnCreate)
+		MESSAGE_HANDLER(WM_DESTROY,OnDestroy)
 		CHAIN_MSG_MAP_ALT(CRichEditCommands<CView>,1)
 	END_MSG_MAP()
 
@@ -24,8 +32,56 @@ public:
 //	LRESULT MessageHandler(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 //	LRESULT CommandHandler(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 //	LRESULT NotifyHandler(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/)
+	CView(CMainFrame& frame) :m_frame(frame)
+	{
+		//
+	}
+	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled);
+	LRESULT OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled);
+	virtual void AppendTextIrc(LPCTSTR lpstrText);
+	virtual void ResetFormat();
+};
 
-	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+class CHtmlView : public CHtmlEditImpl<CHtmlView>
+{
+public:
+	CTextStream m_ts;
+public:
+	BEGIN_MSG_MAP(CHtmlView)
+		MESSAGE_HANDLER(WM_CREATE,OnCreate)
+		CHAIN_MSG_MAP(CHtmlEditImpl<CHtmlView>)
+	END_MSG_MAP()
+	LRESULT OnCreate(UINT uMsg, WPARAM, LPARAM, BOOL& bHandled)
+	{
+		CHtmlEditImpl<CHtmlView>::OnCreate(uMsg, 0, 0, bHandled);
+		m_event.WaitWithMsgLoop();
+		return 0;
+	}
+	virtual void AppendTextIrc(LPCTSTR lpstrText);
+	virtual void ResetFormat()
+	{
+		//
+	}
+	void SetTextColor(COLORREF color,int selection = 0)
+	{
+		//m_doc.ChangeStyleColor(_T("div"), color);
+	}
+	void SetBackgroundColor(COLORREF color)
+	{
+		//m_doc.ChangeStyleBkColor(_T("div"), color);
+	}
+	void SetTextBkColor(COLORREF color,int selection = 0)
+	{
+		//m_doc.ChangeStyleBkColor(_T("div"), color);
+	}
+	void SetTextFontName(LPCTSTR name, int sel = 0)
+	{
+		//m_doc.ChangeStyleFont(_T("div"), name);
+	}
+	void SetSelEnd()
+	{
+		
+	}
 };
 
 // Child window class that will be subclassed for hosting Active X control
@@ -44,10 +100,12 @@ class CBottomClient : public CWindowImpl<CBottomClient, CNo5RichEdit>,
 {
 	CBottom* m_pBottom;
 	CMainFrame &m_frame;
+	CSimpleArray<CString> m_lines;
+	int m_nPos;
 	//
 	int FindNames(LPCTSTR partial, CStringArray *pres);
 public:
-	CBottomClient(CBottom* pBottom,CMainFrame &frame) :m_pBottom(pBottom),m_frame(frame)
+	CBottomClient(CBottom* pBottom,CMainFrame &frame) :m_pBottom(pBottom),m_frame(frame),m_nPos(0)
 	{
 		//
 	}
@@ -61,6 +119,8 @@ public:
 	LRESULT OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled);
 	LRESULT OnChar(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled);
 };
+
+
 
 class CMyComboBox : public CColorPickerComboCtrl
 {

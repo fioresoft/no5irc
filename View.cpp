@@ -4,12 +4,14 @@
 
 #include "stdafx.h"
 #include "resource.h"
+#include "TextStream.h"
 #include "View.h"
 #include "ChildFrm.h"
 #include "MainFrm.h"
 #include "AboutDlg.h"
 #include "usermsgs.h"
 
+extern CAppModule _Module;
 BOOL ToolbarAddControl(HWND hToolBar, HWND hWnd, int pos, int count, BOOL bComboBox);
 
 /*
@@ -32,6 +34,7 @@ BOOL ToolbarAddControl(HWND hToolBar, HWND hWnd, int pos, int count, BOOL bCombo
 15	Light Grey	(210,210,210)
 */
 
+/*
 COLORREF ColorFromCode(int code)
 {
 	switch (code)
@@ -72,132 +75,143 @@ COLORREF ColorFromCode(int code)
 			return 0;
 	}
 }
+*/
 
 BOOL CView::PreTranslateMessage(MSG* pMsg)
 {
-	pMsg;
+	if (TranslateAccelerator(m_hWnd, m_hAccel, pMsg)) {
+		return TRUE;
+	}
 	return FALSE;
 }
-
-int CView::AppendTextIrc(LPCTSTR lpstrText)
+void CView::AppendTextIrc(LPCTSTR lpstrText)
 {
-	const TCHAR* p = lpstrText;
-	const TCHAR* pEnd = p;
-	int fore, back;
-	bool setfore = false, setback = false;
-
-	while (*p) {
-		if (*p == 0x3) {
-			if (p > pEnd) {
-				CString s(pEnd, p - pEnd);
-				AppendText(s);
-			}
-			p++;
-			if (*p >= '0' && *p <= '9') {
-				fore = (*p - '0') * 10;
-				setfore = true;
-				p++;
-				if (*p >= '0' && *p <= '9') {
-					fore += (*p - '0');
-					pEnd = ++p;
-				}
-				else {
-					pEnd = p;
-					fore /= 10;
-				}
-				if (*p == ',') {
-					++p;
-					if (*p >= '0' && *p <= '9') {
-						back = (*p - '0') * 10;
-						setback = true;
-						p++;
-						if (*p >= '0' && *p <= '9') {
-							back += (*p - '0');
-							pEnd = ++p;
-						}
-						else {
-							pEnd = p;
-							back /= 10;
-						}
-					}
-				}
-				else
-					pEnd = p;
-			}
-			else {
-				//ResetFormat();
-				pEnd = p;
-				continue;
-			}
-			if (setfore) {
-				SetTextColor(ColorFromCode(fore));
-				setfore = false;
-			}
-			if (setback) {
-				SetTextBkColor(ColorFromCode(back));
-				setback = false;
-			}
-		}
-		else if (*p == 0x0f) { // reset
-			if (p > pEnd) {
-				CString s(pEnd, p - pEnd);
-				AppendText(s);
-			}
-			ResetFormat();
-			pEnd = ++p;
-		}
-		else if (*p == 0x11) { // monospaced
-			if (p > pEnd) {
-				CString s(pEnd, p - pEnd);
-				AppendText(s);
-			}
-			SetTextFontName(_T("Courier"));
-			pEnd = ++p;
-		}
-		else if (*p == 0x1E) {
-			if (p > pEnd) {
-				CString s(pEnd, p - pEnd);
-				AppendText(s);
-			}
-			SwitchStrike();
-			pEnd = ++p;
-		}
-		else if (*p == 0x1F) {
-			if (p > pEnd) {
-				CString s(pEnd, p - pEnd);
-				AppendText(s);
-			}
-			SwitchUnderline();
-			pEnd = ++p;
-		}
-		else if (*p == 0x1D) {
-			if (p > pEnd) {
-				CString s(pEnd, p - pEnd);
-				AppendText(s);
-			}
-			SwitchItalic();
-			pEnd = ++p;
-		}
-		else if (*p == 0x2) {
-			if (p > pEnd) {
-				CString s(pEnd, p - pEnd);
-				AppendText(s);
-			}
-			SwitchBold();
-			pEnd = ++p;
-		}
-		else if (*(p + 1) == 0 && (p > pEnd))
-		{
-			CString s(pEnd, p - pEnd + 1);
-			AppendText(s);
-			ResetFormat();
-			p++;
-		}
-		else
-			p++;
-	}
-	return 0;
+	// m_iFore
+	
+	m_ts.ParseIRCCode(lpstrText);
+	m_ts.SendStreamToRichEdit(*this);
+	//m_ts.atoms.RemoveAll();
 }
+
+//int CView::AppendTextIrc(LPCTSTR lpstrText)
+//{
+//	const TCHAR* p = lpstrText;
+//	const TCHAR* pEnd = p;
+//	int fore, back;
+//	bool setfore = false, setback = false;
+//
+//	while (*p) {
+//		if (*p == 0x3) {
+//			if (p > pEnd) {
+//				CString s(pEnd, p - pEnd);
+//				AppendText(s);
+//			}
+//			p++;
+//			if (*p >= '0' && *p <= '9') {
+//				fore = (*p - '0') * 10;
+//				setfore = true;
+//				p++;
+//				if (*p >= '0' && *p <= '9') {
+//					fore += (*p - '0');
+//					pEnd = ++p;
+//				}
+//				else {
+//					pEnd = p;
+//					fore /= 10;
+//				}
+//				if (*p == ',') {
+//					++p;
+//					if (*p >= '0' && *p <= '9') {
+//						back = (*p - '0') * 10;
+//						setback = true;
+//						p++;
+//						if (*p >= '0' && *p <= '9') {
+//							back += (*p - '0');
+//							pEnd = ++p;
+//						}
+//						else {
+//							pEnd = p;
+//							back /= 10;
+//						}
+//					}
+//				}
+//				else
+//					pEnd = p;
+//			}
+//			else {
+//			//	ResetFormat();
+//				pEnd = p;
+//				continue;
+//			}
+//			if (setfore) {
+//				SetTextColor(ColorFromCode(fore));
+//				setfore = false;
+//			}
+//			if (setback) {
+//				SetTextBkColor(ColorFromCode(back));
+//				setback = false;
+//			}
+//		}
+//		else if (*p == 0x0f) { // reset
+//			if (p > pEnd) {
+//				CString s(pEnd, p - pEnd);
+//				AppendText(s);
+//			}
+//			ResetFormat();
+//			pEnd = ++p;
+//		}
+//		else if (*p == 0x11) { // monospaced
+//			if (p > pEnd) {
+//				CString s(pEnd, p - pEnd);
+//				AppendText(s);
+//			}
+//			SetTextFontName(_T("Courier"));
+//			pEnd = ++p;
+//		}
+//		else if (*p == 0x1E) {
+//			if (p > pEnd) {
+//				CString s(pEnd, p - pEnd);
+//				AppendText(s);
+//			}
+//			SwitchStrike();
+//			pEnd = ++p;
+//		}
+//		else if (*p == 0x1F) {
+//			if (p > pEnd) {
+//				CString s(pEnd, p - pEnd);
+//				AppendText(s);
+//			}
+//			SwitchUnderline();
+//			pEnd = ++p;
+//		}
+//		else if (*p == 0x1D) {
+//			if (p > pEnd) {
+//				CString s(pEnd, p - pEnd);
+//				AppendText(s);
+//			}
+//			SwitchItalic();
+//			pEnd = ++p;
+//		}
+//		else if (*p == 0x2) {
+//			if (p > pEnd) {
+//				CString s(pEnd, p - pEnd);
+//				AppendText(s);
+//			}
+//			SwitchBold();
+//			pEnd = ++p;
+//		}
+//		else if (*(p + 1) == 0 && (p > pEnd))
+//		{
+//			CString s(pEnd, p - pEnd + 1);
+//			AppendText(s);
+//			ResetFormat();
+//			p++;
+//		}
+//		else
+//			p++;
+//	}
+//	return 0;
+//}
 
 
 void CView::ResetFormat()
@@ -219,10 +233,32 @@ LRESULT CView::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOO
 	SetItalic(FALSE, SCF_ALL);
 	SetTextFontName(_T("Arial"), SCF_ALL);
 	SetTextHeight(12, SCF_ALL);
+	SetIndent(30);
+	m_hAccel = LoadAccelerators(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
+	ATLASSERT(SUCCEEDED(m_hAccel));
+	CMessageLoop* loop = _Module.GetMessageLoop();
+	loop->AddMessageFilter(this);
 	bHandled = FALSE;
 	return 0;
 }
-//
+
+LRESULT CView::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	CMessageLoop* loop = _Module.GetMessageLoop();
+	loop->RemoveMessageFilter(this);
+	return 0;
+}
+
+ //CHtmlView
+void CHtmlView::AppendTextIrc(LPCTSTR lpstrText)
+{
+	// m_iFore
+
+	m_ts.ParseIRCCode(lpstrText);
+	m_ts.SendStreamToHtmlEdit(*this);
+	//m_ts.atoms.RemoveAll();
+}
+////
 // CBottom
 
 void CBottom::CreateClient()
@@ -259,6 +295,7 @@ LRESULT CBottom::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 	CreateClient();
 	m_hAccel = ::LoadAccelerators(_Module.GetModuleInstance(), MAKEINTRESOURCE(IDR_MAINFRAME));
 	m_hWndClient = m_client;
+	
 	//
 	//
 	return 0;
@@ -543,6 +580,7 @@ LRESULT CBottomClient::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/
 	if (wParam == VK_RETURN) {
 		CString str;
 		GetWindowText(str);
+		m_lines.Add(str);
 		str += _T("\r\n");
 		SetWindowText(_T(""));
 		m_frame.SendMessage(WM_MSGFROMBOTTOM, (WPARAM)(LPCTSTR)str);
@@ -607,6 +645,27 @@ LRESULT CBottomClient::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/
 			}
 		}
 	}
+	else if (wParam == VK_DOWN) {
+		m_nPos++;
+
+		if (m_nPos == m_lines.GetSize())
+			m_nPos--;
+		if (m_nPos >= 0 && m_lines.GetSize()) {
+			CString line = m_lines[m_nPos];
+			SetWindowText(line);
+		}
+
+	}
+	else if (wParam == VK_UP) {
+		m_nPos--;
+
+		if (m_nPos < 0)
+			m_nPos = 0;
+		if (m_lines.GetSize()) {
+			CString line = m_lines[m_nPos];
+			SetWindowText(line);
+		}
+	}
 	else
 		bHandled = FALSE;
 	return 0;
@@ -620,7 +679,7 @@ LRESULT CBottomClient::OnChar(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 			CString txt = '/';
 			if (m_pBottom->OnEditComplete(cmd)) {
 				txt += cmd;
-				AppendText(txt);
+				SetWindowText(txt);
 			}
 			bHandled = TRUE;
 		}
