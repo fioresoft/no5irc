@@ -1,0 +1,9 @@
+txtObj = no5.Text
+txtObj.Clear()
+txtObj.Bold()
+txtObj.Strikeout()
+txtObj.BackColor = 1
+txtObj.ForeColor = 8
+txtObj.Text = "hello world"
+no5.SendActiveChannelMsg(txtObj.Text + "\r\n")
+no5.Output(txtObj.PlainText)

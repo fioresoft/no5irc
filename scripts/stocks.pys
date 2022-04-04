@@ -1,0 +1,38 @@
+from bs4 import BeautifulSoup
+import requests
+
+url = "https://www.infomoney.com.br/cotacoes/petrobras-petr4/"
+req = requests.get(url)
+soup = BeautifulSoup(req.text,"html.parser")
+# print("%s" % req.text)
+elem = soup.find('div',{'class':'value'})
+elem1 = elem.find('p')
+#print(elem.text)
+elem = soup.find('div', {'class': 'percentage'})
+#print(elem)
+elem = elem.findChild('p')
+#print(elem.text)
+marquee = no5.marquee
+if elem.text.strip("\r\n\t ")[0] == '-':
+    color = 0x0000ff
+else:
+    color = 0x00ff00
+marquee.AddItem("PETR4 " + elem.text.strip("\r\n\t "),color)
+#print("###############################################################")
+url = "https://www.infomoney.com.br/cotacoes/cripto/ativo/bitcoin-btc/"
+req = requests.get(url)
+soup = BeautifulSoup(req.text,"html.parser")
+#print("%s" % req.text)
+elem = soup.find('div',{'class':'value'})
+elem1 = elem.findChild('p')
+# print(elem)
+# print(elem1.string)
+elem = soup.find('div', {'class': 'percentage'})
+#print(elem)
+elem = elem.findChild('p')
+#print(elem.text)
+if elem.text.strip("\r\n\t ")[0] == '-':
+    color = 0x0000ff
+else:
+    color = 0x00ff00
+marquee.AddItem("BITCOIN " + elem.string.strip("\r\n\t "),color)

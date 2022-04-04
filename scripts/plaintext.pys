@@ -1,0 +1,4 @@
+from win32com.client import Dispatch
+def no5_OnChannelMsg(channel,user,txtObj):
+    msg = Dispatch(txtObj)
+    no5.Output(msg.PlainText)

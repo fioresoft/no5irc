@@ -1,0 +1,15 @@
+from googletrans import Translator
+from win32com.client import Dispatch
+#  pip install googletrans==4.0.0-rc1
+
+def no5_OnChannelMsg(channel,user,txtObj):
+    txt = Dispatch(txtObj)
+    msg = txt.PlainText
+    if(msg.startswith(".translate")):
+        count = len(msg)
+        translator = Translator()
+        trans = msg[11:count]
+        no5.Output(trans)
+        res = translator.translate(trans, dest="en")
+        no5.SendActiveChannelMsg(res.text)
+        #print(res.text)
